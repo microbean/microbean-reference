@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.microbean</groupId>
-  <artifactId>microbean-instance</artifactId>
+  <artifactId>microbean-reference</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
   <parent>
@@ -13,15 +13,15 @@
     <relativePath />
   </parent>
 
-  <name>microBean™ Instance</name>
-  <description>microBean™ Instance: Utility classes for working with instances.</description>
+  <name>microBean™ Reference</name>
+  <description>microBean™ Reference: Utility classes for working with references.</description>
   <inceptionYear>2023</inceptionYear>
-  <url>https://microbean.github.io/microbean-instance</url>
+  <url>https://microbean.github.io/microbean-reference</url>
 
   <scm>
-    <connection>scm:git:git@github.com:microbean/microbean-instance.git</connection>
-    <developerConnection>scm:git:git@github.com:microbean/microbean-instance.git</developerConnection>
-    <url>https://github.com/microbean/microbean-instance/</url>
+    <connection>scm:git:git@github.com:microbean/microbean-reference.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/microbean-reference.git</developerConnection>
+    <url>https://github.com/microbean/microbean-reference/</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -44,14 +44,13 @@
         <version>0.0.1-SNAPSHOT</version>
         <type>jar</type>
       </dependency>
-      
+
       <dependency>
         <groupId>org.microbean</groupId>
-        <artifactId>microbean-scopelet</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <artifactId>microbean-qualifier</artifactId>
+        <version>0.2.3</version>
         <type>jar</type>
       </dependency>
-
 
     </dependencies>
   </dependencyManagement>
@@ -71,7 +70,14 @@
 
     <dependency>
       <groupId>org.microbean</groupId>
-      <artifactId>microbean-scopelet</artifactId>
+      <artifactId>microbean-lang</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-qualifier</artifactId>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
@@ -118,6 +124,7 @@
             <additionalOptions>
               <additionalOption>--add-stylesheet</additionalOption>
               <additionalOption>${project.basedir}/src/main/javadoc/css/fonts.css</additionalOption>
+              <additionalOption>--enable-preview</additionalOption>
             </additionalOptions>
             <docfilessubdirs>true</docfilessubdirs>
           </configuration>

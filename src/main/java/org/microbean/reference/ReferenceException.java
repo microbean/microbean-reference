@@ -11,18 +11,27 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package org.microbean.reference;
 
-/**
- * Provides packages related to implementing references.
- *
- * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
- */
-module org.microbean.reference {
+public class ReferenceException extends RuntimeException {
 
-  exports org.microbean.reference;
+  private static final long serialVersionUID = 1L;
 
-  requires transitive org.microbean.bean;
-  requires transitive org.microbean.lang;
-  requires org.microbean.qualifier;
+  public ReferenceException() {
+    super();
+  }
+
+  public ReferenceException(final String message) {
+    super(message);
+  }
+
+  public ReferenceException(final Throwable cause) {
+    super(cause);
+  }
+
+  public ReferenceException(final String message,
+                            final Throwable cause) {
+    super(message, cause);
+  }
 
 }

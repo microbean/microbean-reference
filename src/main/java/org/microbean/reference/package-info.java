@@ -13,16 +13,8 @@
  */
 
 /**
- * Provides packages related to implementing references.
+ * Provides classes and interfaces related to working with references.
  *
  * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
  */
-module org.microbean.reference {
-
-  exports org.microbean.reference;
-
-  requires transitive org.microbean.bean;
-  requires transitive org.microbean.lang;
-  requires org.microbean.qualifier;
-
-}
+package org.microbean.reference;

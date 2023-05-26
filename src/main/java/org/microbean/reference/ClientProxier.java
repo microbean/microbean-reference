@@ -11,18 +11,17 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package org.microbean.reference;
 
-/**
- * Provides packages related to implementing references.
- *
- * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
- */
-module org.microbean.reference {
+import org.microbean.bean.Bean;
+import org.microbean.bean.Id;
+import org.microbean.bean.Instances;
+import org.microbean.bean.Selector;
 
-  exports org.microbean.reference;
+public interface ClientProxier {
 
-  requires transitive org.microbean.bean;
-  requires transitive org.microbean.lang;
-  requires org.microbean.qualifier;
-
+  public boolean needsClientProxy(final Selector selector, final Id id, final Instances instances);
+  
+  public <R> R clientProxy(final Selector selector, final Bean<R> bean, final Instances instances);
+  
 }
