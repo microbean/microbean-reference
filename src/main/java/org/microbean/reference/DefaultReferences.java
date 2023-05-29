@@ -49,6 +49,9 @@ public final class DefaultReferences<R> implements References<R> {
   // Treat as effectively final, please.
   private ClientProxier clientProxier;
 
+  // TODO: see, perhaps: https://stackoverflow.com/a/37403083/208288 and
+  // https://github.com/spring-projects/spring-loaded/blob/master/springloaded/src/main/java/org/springsource/loaded/support/ConcurrentWeakIdentityHashMap.java
+  
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
 
@@ -118,11 +121,9 @@ public final class DefaultReferences<R> implements References<R> {
   @Override // References<R>
   public final void destroy(final R r) {
     if (r != null) {
-      final Id id;
       synchronized (this.ids) {
-        id = this.ids.remove(r);
+        this.remove(this.ids.remove(r));
       }
-      this.instances.remove(id);
     }
   }
 
@@ -131,11 +132,16 @@ public final class DefaultReferences<R> implements References<R> {
     synchronized (this.ids) {
       final Iterator<Entry<R, Id>> i = this.ids.entrySet().iterator();
       while (i.hasNext()) {
-        this.instances.remove(i.next().getValue());
+        this.remove(i.next().getValue());
         i.remove();
       }
     }
+  }
 
+  private final void remove(final Id id) {
+    if (id != null) {
+      this.instances.remove(id);
+    }
   }
   
   @Override // References<R>

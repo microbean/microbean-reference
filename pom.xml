@@ -40,7 +40,21 @@
 
       <dependency>
         <groupId>org.microbean</groupId>
+        <artifactId>microbean-instance</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.microbean</groupId>
         <artifactId>microbean-lang</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-scopelet</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <type>jar</type>
       </dependency>
@@ -100,6 +114,19 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-instance</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-scopelet</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
