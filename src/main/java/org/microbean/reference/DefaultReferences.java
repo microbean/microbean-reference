@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.microbean.bean.Bean;
+import org.microbean.bean.BeanSet;
 import org.microbean.bean.Id;
 import org.microbean.bean.Instances;
 import org.microbean.bean.References;
@@ -61,15 +62,14 @@ public final class DefaultReferences<R> implements References<R> {
    */
 
 
-  public DefaultReferences(final Instances bootstrapInstances) {
-    this(bootstrapInstances, null);
+  public DefaultReferences(final Selector selector, final Instances bootstrapInstances) {
+    this(selector, bootstrapInstances, null);
   }
 
-  public DefaultReferences(final Instances bootstrapInstances,
-                           final ClientProxier clientProxier) {
+  public DefaultReferences(final Selector selector, final Instances bootstrapInstances, final ClientProxier clientProxier) {
     super();
     this.ids = new IdentityHashMap<>();
-    this.selector = new Selector(declaredType(Object.class), defaultQualifiers());    
+    this.selector = Objects.requireNonNull(selector, "selector");
     this.instances = Objects.requireNonNull(bootstrapInstances, "bootstrapInstances"); // possibly temporary
     this.clientProxier = clientProxier == null ? NoopClientProxier.INSTANCE : clientProxier; // possibly temporary
     this.initialize();
@@ -94,22 +94,27 @@ public final class DefaultReferences<R> implements References<R> {
 
 
   private final void initialize() {
-    Selector s = new Selector(declaredType(Instances.class), defaultQualifiers());
-    Bean<?> b = this.instances.beanSet().bean(s);
+    Selector s = new Selector(Instances.class);
+    Bean<?> b = this.beanSet().bean(s);
     if (b != null) {
       this.instances = Objects.requireNonNull(this.supplyReference(s, b.cast()), "this.supplyReference(" + s + ", " + b + ")");
     }
 
-    s = new Selector(declaredType(ClientProxier.class), defaultQualifiers());
-    b = this.instances.beanSet().bean(s);
+    s = new Selector(ClientProxier.class);
+    b = this.beanSet().bean(s);
     if (b != null) {
       this.clientProxier = Objects.requireNonNull(this.supplyReference(s, b.cast()), "this.supplyReference(" + s + ", " + b + ")");
     }
   }
 
   @Override // References<R>
+  public final BeanSet beanSet() {
+    return this.instances.beanSet();
+  }
+
+  @Override // References<R>
   public final Iterator<R> iterator() {
-    return new ReferenceIterator(this.instances.beanSet().beans().iterator());
+    return new ReferenceIterator(this.beanSet().beans(this.selector).iterator());
   }
 
   @Override // References<R>
@@ -119,12 +124,13 @@ public final class DefaultReferences<R> implements References<R> {
   }
 
   @Override // References<R>
-  public final void destroy(final R r) {
+  public final boolean destroy(final R r) {
     if (r != null) {
       synchronized (this.ids) {
-        this.remove(this.ids.remove(r));
+        return this.remove(this.ids.remove(r));
       }
     }
+    return false;
   }
 
   @Override // AutoCloseable
@@ -138,10 +144,8 @@ public final class DefaultReferences<R> implements References<R> {
     }
   }
 
-  private final void remove(final Id id) {
-    if (id != null) {
-      this.instances.remove(id);
-    }
+  private final boolean remove(final Id id) {
+    return id != null && this.instances.remove(id);
   }
   
   @Override // References<R>
@@ -152,7 +156,7 @@ public final class DefaultReferences<R> implements References<R> {
   @Override // References
   public final <R> R supplyReference(final Selector selector, Bean<R> bean) {
     if (bean == null) {
-      final Bean<?> b = this.instances.beanSet().bean(selector);
+      final Bean<?> b = this.beanSet().bean(selector);
       if (b == null) {
         throw new UnsatisfiedResolutionException(selector);
       }
@@ -181,7 +185,7 @@ public final class DefaultReferences<R> implements References<R> {
      */
 
 
-    private final Iterator<? extends Bean<?>> bi;
+    private final Iterator<? extends Bean<?>> beanIterator;
 
     private final AtomicReference<R> last;
 
@@ -191,9 +195,9 @@ public final class DefaultReferences<R> implements References<R> {
      */
 
 
-    private ReferenceIterator(final Iterator<? extends Bean<?>> bi) {
+    private ReferenceIterator(final Iterator<? extends Bean<?>> beanIterator) {
       super();
-      this.bi = Objects.requireNonNull(bi, "bi");
+      this.beanIterator = Objects.requireNonNull(beanIterator, "beanIterator");
       this.last = new AtomicReference<>();
     }
 
@@ -205,12 +209,12 @@ public final class DefaultReferences<R> implements References<R> {
 
     @Override // Iterator<R>
     public final boolean hasNext() {
-      return this.bi.hasNext();
+      return this.beanIterator.hasNext();
     }
 
     @Override // Iterator<R>
     public final R next() {
-      final Bean<R> bean = this.bi.next().cast();
+      final Bean<R> bean = this.beanIterator.next().cast();
       final R r = DefaultReferences.this.supplyReference(DefaultReferences.this.selector, bean);
       synchronized (DefaultReferences.this.ids) {
         DefaultReferences.this.ids.putIfAbsent(r, bean.id());
