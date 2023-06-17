@@ -116,9 +116,9 @@ final class TestDefaultReferences {
     assertNotNull(references.supplyReference(new Selector(BeanSet.class)));
     assertNotNull(references.supplyReference(new Selector(Creation.Factory.class)));
     assertNotNull(references.supplyReference(new Selector(Instances.class)));
-    assertNotNull(references.supplyReference(new Selector(NoneScopelet.class, anyQualifiers())));
-    assertNotNull(references.supplyReference(new Selector(References.class)));
-    assertNotNull(references.supplyReference(new Selector(SingletonScopelet.class, anyQualifiers())));
+    assertNotNull(references.supplyReference(new Selector(NoneScopelet.class, List.of(NONE_ID))));
+    assertNotNull(references.supplyReference(new Selector(References.class))); // note this is a raw type; References declares a type parameter
+    assertNotNull(references.supplyReference(new Selector(SingletonScopelet.class, List.of(SINGLETON_ID))));
   }
 
   @Test

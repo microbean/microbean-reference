@@ -26,13 +26,19 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
+import org.microbean.bean.Bean;
 import org.microbean.bean.BeanTypeList;
 import org.microbean.bean.Id;
 import org.microbean.bean.Selector;
+import org.microbean.bean.SingletonFactory;
 
 import org.microbean.lang.TypeAndElementSource;
 
 import org.microbean.lang.type.DelegatingTypeMirror;
+
+import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
+
+import static org.microbean.scope.Scope.SINGLETON_ID;
 
 public final class DefaultClassNamer implements ClassNamer {
 
@@ -44,11 +50,11 @@ public final class DefaultClassNamer implements ClassNamer {
 
   @Override
   public final String className(final Selector s, final Id id) {
-    final TypeElement supertypeElement = (TypeElement)supertype(id.types()).asElement();
-    final PackageElement supertypePackage = packageElementOf(supertypeElement);
+    final TypeElement supertypeElement = (TypeElement)ClassNamer.supertype(this.typeAndElementSource, id).asElement();
+    final PackageElement supertypePackage = ClassNamer.packageElementOf(supertypeElement);
     final ModuleElement supertypeModule = (ModuleElement)supertypePackage.getEnclosingElement();
 
-    final ModuleElement myModule = moduleElementOf(this.typeAndElementSource.typeElement(this.getClass()));
+    final ModuleElement myModule = ClassNamer.moduleElementOf(this.typeAndElementSource.typeElement(this.getClass()));
 
     // Somewhat counterintuitively: if the superclassModule can read myModule (if java.base can read com.foo), then we
     // use the superclass as the lookup class.  This feels backwards but works. I need to think more on this. For now
@@ -63,23 +69,13 @@ public final class DefaultClassNamer implements ClassNamer {
       .toString();
   }
 
-  private final DeclaredType supertype(final BeanTypeList btl) {
-    final List<? extends TypeMirror> classes = btl.classes();
-    final DeclaredType supertypeMirror = (DeclaredType)(classes.isEmpty() ? (DeclaredType)this.typeAndElementSource.typeElement("java.lang.Object").asType() : classes.get(0));
-    assert supertypeMirror instanceof DelegatingTypeMirror; // no comletion locks needed
-    assert supertypeMirror.getKind() == TypeKind.DECLARED; // not a TypeVariable, not an ArrayType
-    return supertypeMirror;
-  }
-
-  private static final ModuleElement moduleElementOf(Element e) {
-    return (ModuleElement)packageElementOf(e).getEnclosingElement();
-  }
-
-  private static final PackageElement packageElementOf(Element e) {
-    while (e != null && e.getKind() != ElementKind.PACKAGE) {
-      e = e.getEnclosingElement();
-    }
-    return (PackageElement)e;
+  public static final Bean<DefaultClassNamer> bean(final TypeAndElementSource tes) {
+    return
+      new Bean<>(new Id(List.of(tes.declaredType(DefaultClassNamer.class),
+                                tes.declaredType(ClassNamer.class)),
+                        anyAndDefaultQualifiers(),
+                        SINGLETON_ID),
+                 new SingletonFactory<>(new DefaultClassNamer(tes)));
   }
 
 }
