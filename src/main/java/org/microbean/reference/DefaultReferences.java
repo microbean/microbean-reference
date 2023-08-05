@@ -30,10 +30,6 @@ import org.microbean.bean.References;
 import org.microbean.bean.Selector;
 import org.microbean.bean.UnsatisfiedResolutionException;
 
-import static org.microbean.bean.Qualifiers.defaultQualifiers;
-
-import static org.microbean.lang.Lang.declaredType;
-
 public final class DefaultReferences<R> implements References<R> {
 
 
@@ -161,10 +157,9 @@ public final class DefaultReferences<R> implements References<R> {
         throw new UnsatisfiedResolutionException(selector);
       }
       bean = b.cast();
+    } else if (!selector.selects(bean)) {
+      throw new IllegalArgumentException("bean: " + bean);
     }
-    // Note that if the incoming Bean was NOT null, then it is possible that the incoming Selector does not select it. I
-    // think this is OK because at this point the selector is informational only, and identifies the reference request,
-    // really.
     return
       this.clientProxier.needsClientProxy(selector, bean.id(), this.instances) ?
       this.clientProxier.clientProxy(selector, bean, this.instances) :

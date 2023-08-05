@@ -170,6 +170,8 @@
               </configurationParameters>
             </properties>
             <systemPropertyVariables>
+              <java.util.logging.config.file>src/test/java/logging.properties</java.util.logging.config.file>
+              <org.microbean.lang.Lang.verbose>${org.microbean.lang.Lang.verbose}</org.microbean.lang.Lang.verbose>
               <project.build.directory>${project.build.directory}</project.build.directory>
               <project.build.testOutputDirectory>${project.build.testOutputDirectory}</project.build.testOutputDirectory>
             </systemPropertyVariables>
@@ -201,6 +203,8 @@
     <scmpublish.content>${project.reporting.outputDirectory}</scmpublish.content>
     <scmpublish.pubScmUrl>${project.scm.developerConnection}</scmpublish.pubScmUrl>
     <scmpublish.scm.branch>gh-pages</scmpublish.scm.branch>
+
+    <org.microbean.lang.Lang.verbose>false</org.microbean.lang.Lang.verbose>
 
   </properties>
 

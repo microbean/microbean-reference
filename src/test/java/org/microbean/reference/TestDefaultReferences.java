@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.microbean.bean.Alternate;
+import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
@@ -43,6 +44,9 @@ import org.microbean.bean.References;
 import org.microbean.bean.Selector;
 
 import org.microbean.instance.DefaultInstances;
+
+import org.microbean.lang.Lang;
+import org.microbean.lang.TypeAndElementSource;
 
 import org.microbean.scopelet.NoneScopelet;
 import org.microbean.scopelet.Scopelet;
@@ -61,15 +65,15 @@ import static org.microbean.bean.Qualifiers.anyQualifiers;
 import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
-import static org.microbean.lang.Lang.declaredType;
-import static org.microbean.lang.Lang.typeElement;
-import static org.microbean.lang.Lang.wildcardType;
-
 import static org.microbean.scope.Scope.NONE_ID;
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
 final class TestDefaultReferences {
 
+  private static Assignability assignability;
+
+  private static TypeAndElementSource tes;
+  
   private static Bean<Simple> simpleBean;
 
   private static Bean<Host> hostBean;
@@ -82,11 +86,13 @@ final class TestDefaultReferences {
 
   @BeforeAll
   static final void staticSetup() {
+    tes = Lang.typeAndElementSource();
+    assignability = new Assignability(tes);
     simpleBean =
-      new Bean<>(new Id(declaredType(Simple.class), anyAndDefaultQualifiers(), NONE_ID),
+      new Bean<>(new Id(tes.declaredType(Simple.class), anyAndDefaultQualifiers(), NONE_ID),
                  c -> new Simple());
     hostBean =
-      new Bean<>(new Id(declaredType(Host.class), anyAndDefaultQualifiers(), NONE_ID),
+      new Bean<>(new Id(tes.declaredType(Host.class), anyAndDefaultQualifiers(), NONE_ID),
                  c -> {
                    assert c.references() instanceof DefaultReferences : c.references();
                    assert c instanceof DefaultCreation;
@@ -94,7 +100,7 @@ final class TestDefaultReferences {
                    return new Host(c.references().supplyReference(new Selector(Parasite.class)));
       });
     parasiteBean =
-      new Bean<>(new Id(declaredType(Parasite.class), anyAndDefaultQualifiers(), NONE_ID),
+      new Bean<>(new Id(tes.declaredType(Parasite.class), anyAndDefaultQualifiers(), NONE_ID),
                  c -> new Parasite());
   }
 
@@ -195,8 +201,8 @@ final class TestDefaultReferences {
       // Holds zero or one References<Object> instances. Exists to handle forward reference.
       @SuppressWarnings({"unchecked", "rawtypes"})
       final References<Object>[] ref = new References[1];
-      final TypeMirror objectType = declaredType(Object.class);
-      final TypeMirror referencesType = declaredType(null, typeElement(References.class), objectType);
+      final TypeMirror objectType = tes.declaredType(Object.class);
+      final TypeMirror referencesType = tes.declaredType(null, tes.typeElement(References.class), objectType);
       newBeans.add(new Bean<>(new Id(List.of(referencesType),
                                      anyAndDefaultQualifiers(),
                                      SINGLETON_ID),
@@ -211,7 +217,7 @@ final class TestDefaultReferences {
             return ref[0];
           }
         }));
-      ref[0] = new DefaultReferences<Object>(new Selector(objectType), new DefaultInstances(newBeans));
+      ref[0] = new DefaultReferences<Object>(new Selector(objectType), new DefaultInstances(assignability, tes, newBeans));
       ref[0] = ref[0].supplyReference(new Selector(referencesType));
       this.references = ref[0];
     }
