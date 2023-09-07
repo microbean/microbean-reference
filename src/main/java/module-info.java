@@ -19,7 +19,7 @@
  */
 module org.microbean.reference {
 
-  exports org.microbean.reference2;
+  exports org.microbean.reference;
 
   requires transitive org.microbean.bean;
   requires transitive org.microbean.lang;

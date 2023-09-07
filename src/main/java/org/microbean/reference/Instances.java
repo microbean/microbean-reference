@@ -11,27 +11,24 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.microbean.reference2;
+package org.microbean.reference;
 
-public class ClientProxyInstantiationException extends ReferenceException {
+import org.microbean.bean.Bean;
+import org.microbean.bean.BeanSet;
+import org.microbean.bean.Creation;
+import org.microbean.bean.Id;
+import org.microbean.bean.References;
+import org.microbean.bean.Selector;
 
-  private static final long serialVersionUID = 1L;
+public interface Instances {
 
-  public ClientProxyInstantiationException() {
-    super();
-  }
+  public BeanSet beanSet();
 
-  public ClientProxyInstantiationException(final String message) {
-    super(message);
-  }
+  public <I> I instance(final Selector selector,
+                        final Bean<I> bean,
+                        final Creation<I> creation,
+                        final References<?> references);
 
-  public ClientProxyInstantiationException(final Throwable cause) {
-    super(cause);
-  }
-
-  public ClientProxyInstantiationException(final String message,
-                                           final Throwable cause) {
-    super(message, cause);
-  }
-
+  public boolean remove(final Id id);
+  
 }

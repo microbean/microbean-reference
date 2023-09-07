@@ -11,25 +11,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.microbean.reference2;
+package org.microbean.reference;
 
-public class ReferenceException extends RuntimeException {
+public class ClientProxyInstantiationException extends ReferenceException {
 
   private static final long serialVersionUID = 1L;
 
-  public ReferenceException() {
+  public ClientProxyInstantiationException() {
     super();
   }
 
-  public ReferenceException(final String message) {
+  public ClientProxyInstantiationException(final String message) {
     super(message);
   }
 
-  public ReferenceException(final Throwable cause) {
+  public ClientProxyInstantiationException(final Throwable cause) {
     super(cause);
   }
 
-  public ReferenceException(final String message, final Throwable cause) {
+  public ClientProxyInstantiationException(final String message,
+                                           final Throwable cause) {
     super(message, cause);
   }
 

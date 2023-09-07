@@ -11,24 +11,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.microbean.reference2;
+package org.microbean.reference;
 
-import org.microbean.bean.Bean;
-import org.microbean.bean.BeanSet;
-import org.microbean.bean.Creation;
-import org.microbean.bean.Id;
-import org.microbean.bean.References;
-import org.microbean.bean.Selector;
+public class ReferenceException extends RuntimeException {
 
-public interface Instances {
+  private static final long serialVersionUID = 1L;
 
-  public BeanSet beanSet();
+  public ReferenceException() {
+    super();
+  }
 
-  public <I> I instance(final Selector selector,
-                        final Bean<I> bean,
-                        final Creation<I> creation,
-                        final References<?> references);
+  public ReferenceException(final String message) {
+    super(message);
+  }
 
-  public boolean remove(final Id id);
-  
+  public ReferenceException(final Throwable cause) {
+    super(cause);
+  }
+
+  public ReferenceException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
 }
