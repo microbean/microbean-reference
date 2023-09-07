@@ -20,18 +20,18 @@ import java.util.Objects;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.microbean.bean2.Assignability;
-import org.microbean.bean2.Bean;
-import org.microbean.bean2.BeanSet;
-import org.microbean.bean2.Creation;
-import org.microbean.bean2.Id;
-import org.microbean.bean2.Selector;
-import org.microbean.bean2.References;
-import org.microbean.bean2.UnsatisfiedResolutionException;
+import org.microbean.bean.Assignability;
+import org.microbean.bean.Bean;
+import org.microbean.bean.BeanSet;
+import org.microbean.bean.Creation;
+import org.microbean.bean.Id;
+import org.microbean.bean.Selector;
+import org.microbean.bean.References;
+import org.microbean.bean.UnsatisfiedResolutionException;
 
 import org.microbean.lang.TypeAndElementSource;
 
-import static org.microbean.bean2.Qualifiers.defaultQualifiers;
+import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
 public final class DefaultReferences<R> implements References<R> {
 
@@ -43,6 +43,7 @@ public final class DefaultReferences<R> implements References<R> {
   // close() method.
   private final Creation<?> rootCreation;
 
+  // For the iterator() method, chooses what will be selected and iterated over.
   private final Selector selector;
 
   // @GuardedBy("itself")
@@ -66,7 +67,7 @@ public final class DefaultReferences<R> implements References<R> {
     this.instances = Objects.requireNonNull(bootstrapInstances, "bootstrapInstances");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
     this.rootCreation = this.creation();
-
+    
     Selector s = new Selector(Instances.class);
     Bean<?> b = this.beanSet().bean(s);
     if (b != null) {
@@ -123,9 +124,9 @@ public final class DefaultReferences<R> implements References<R> {
       this.reference(new Selector(this.assignability,
                                   this.tes.declaredType(null,
                                                         this.tes.typeElement(Creation.class),
-                                                        this.tes.wildcardType(null, null)),
+                                                        this.tes.wildcardType(null, null)), // or Object.class?
                                   defaultQualifiers()),
-                     BootstrapCreation.INSTANCE.cast());
+                     BootstrapCreation.INSTANCE.cast()); // Note that BootstrapCreation does not implement AutoCloseableRegistry.
   }
 
   @Override // References
@@ -142,7 +143,8 @@ public final class DefaultReferences<R> implements References<R> {
       throw new IllegalArgumentException("bean: " + bean);
     }
     if (c != null) {
-      // Critical. Clones c and registers it for subsequent closing with its ancestor.
+      // Critical. Clones c and registers the clone for subsequent closing with its ancestor. See
+      // org.microbean.bean.DefaultCreation for example, and DefaultAutoCloseableRegistry.
       c = c.clone();
     }
     return
@@ -249,6 +251,9 @@ public final class DefaultReferences<R> implements References<R> {
 
   }
 
+  // Note that this does not implement (or contain, or reference) AutoCloseableRegistry, so is suitable only for cases
+  // where it is known that no dependent objects will be created. One such case (the only?) is when a Creation itself is
+  // being retrieved.
   private static final class BootstrapCreation<I> implements Creation<I> {
 
     private static final BootstrapCreation<?> INSTANCE = new BootstrapCreation<>();

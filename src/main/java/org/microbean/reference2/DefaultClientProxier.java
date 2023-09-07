@@ -26,12 +26,12 @@ import java.util.concurrent.ConcurrentMap;
 
 import java.util.function.Supplier;
 
-import org.microbean.bean2.Bean;
-import org.microbean.bean2.Creation;
-import org.microbean.bean2.Id;
-import org.microbean.bean2.References;
-import org.microbean.bean2.Selector;
-import org.microbean.bean2.Singleton;
+import org.microbean.bean.Bean;
+import org.microbean.bean.Creation;
+import org.microbean.bean.Id;
+import org.microbean.bean.References;
+import org.microbean.bean.Selector;
+import org.microbean.bean.Singleton;
 
 import org.microbean.lang.TypeAndElementSource;
 
@@ -39,7 +39,7 @@ import org.microbean.scope.Scope;
 
 import static java.lang.invoke.MethodType.methodType;
 
-import static org.microbean.bean2.Qualifiers.anyAndDefaultQualifiers;
+import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
 
 import static org.microbean.scope.Scope.SINGLETON_ID;
 

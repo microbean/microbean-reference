@@ -16,11 +16,11 @@ package org.microbean.reference2;
 import java.util.Iterator;
 import java.util.Objects;
 
-import org.microbean.bean2.Bean;
-import org.microbean.bean2.BeanSet;
-import org.microbean.bean2.Creation;
-import org.microbean.bean2.References;
-import org.microbean.bean2.Selector;
+import org.microbean.bean.Bean;
+import org.microbean.bean.BeanSet;
+import org.microbean.bean.Creation;
+import org.microbean.bean.References;
+import org.microbean.bean.Selector;
 
 class DelegatingReferences<R> implements References<R> {
 

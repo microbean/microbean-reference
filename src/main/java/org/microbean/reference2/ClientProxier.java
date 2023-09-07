@@ -13,11 +13,11 @@
  */
 package org.microbean.reference2;
 
-import org.microbean.bean2.Bean;
-import org.microbean.bean2.Creation;
-import org.microbean.bean2.Id;
-import org.microbean.bean2.References;
-import org.microbean.bean2.Selector;
+import org.microbean.bean.Bean;
+import org.microbean.bean.Creation;
+import org.microbean.bean.Id;
+import org.microbean.bean.References;
+import org.microbean.bean.Selector;
 
 public interface ClientProxier {
 

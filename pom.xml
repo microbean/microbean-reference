@@ -35,35 +35,24 @@
         <groupId>org.microbean</groupId>
         <artifactId>microbean-bean</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
-        <artifactId>microbean-instance</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-        <type>jar</type>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.microbean</groupId>
         <artifactId>microbean-lang</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-scopelet</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-qualifier</artifactId>
         <version>0.2.3</version>
-        <type>jar</type>
       </dependency>
 
     </dependencies>
@@ -78,21 +67,24 @@
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-bean</artifactId>
-      <type>jar</type>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-lang</artifactId>
-      <type>jar</type>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-qualifier</artifactId>
-      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-scopelet</artifactId>
       <scope>compile</scope>
     </dependency>
 
@@ -103,28 +95,12 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <type>jar</type>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <type>jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-instance</artifactId>
-      <type>jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-scopelet</artifactId>
-      <type>jar</type>
       <scope>test</scope>
     </dependency>
 
@@ -134,6 +110,111 @@
     <pluginManagement>
       <plugins>
 
+        <plugin>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.3.0</version>
+          <configuration>
+            <checkstyleRules>
+              <module name="Checker">
+                <module name="BeforeExecutionExclusionFileFilter">
+                  <property name="fileNamePattern" value="module\-info\.java$"/>
+                </module>
+                <module name="FileTabCharacter">
+                  <property name="eachLine" value="true"/>
+                </module>
+                <module name="JavadocPackage"/>
+                <module name="LineLength">
+                  <property name="max" value="160"/>
+                </module>
+                <module name="NewlineAtEndOfFile">
+                  <property name="lineSeparator" value="lf"/>
+                </module>
+                <module name="TreeWalker">
+                  <module name="AnnotationLocation">
+                    <property name="allowSamelineSingleParameterlessAnnotation" value="false"/>
+                  </module>
+                  <module name="AnnotationUseStyle"/>
+                  <module name="ArrayTypeStyle"/>
+                  <module name="AvoidNestedBlocks"/>
+                  <module name="AvoidStarImport"/>
+                  <module name="ClassMemberImpliedModifier"/>
+                  <module name="CommentsIndentation"/>
+                  <module name="DeclarationOrder"/>
+                  <module name="DefaultComesLast"/>
+                  <module name="EmptyBlock"/>
+                  <module name="EmptyCatchBlock"/>
+                  <module name="EmptyStatement"/>
+                  <module name="EqualsHashCode"/>
+                  <module name="ExplicitInitialization"/>
+                  <module name="FinalClass"/>
+                  <module name="FinalLocalVariable">
+                    <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF"/>
+                  </module>
+                  <module name="HideUtilityClassConstructor"/>
+                  <module name="InnerAssignment"/>
+                  <module name="InnerTypeLast"/>
+                  <module name="InterfaceIsType"/>
+                  <module name="InterfaceMemberImpliedModifier">
+                    <property name="violateImpliedAbstractMethod" value="false"/>
+                  </module>
+                  <module name="InvalidJavadocPosition"/>
+                  <module name="JavadocContentLocationCheck"/>
+                  <module name="JavadocMissingWhitespaceAfterAsterisk"/>
+                  <module name="JavadocParagraph"/>
+                  <module name="JavadocStyle"/>
+                  <module name="JavadocVariable">
+                    <property name="scope" value="protected"/>
+                  </module>
+                  <module name="LeftCurly"/>
+                  <module name="MethodTypeParameterName"/>
+                  <module name="MissingCtor"/>
+                  <module name="MissingDeprecated"/>
+                  <module name="MissingJavadocMethod"/>
+                  <module name="MissingJavadocPackage"/>
+                  <module name="MissingJavadocType">
+                    <property name="scope" value="protected"/>
+                  </module>
+                  <module name="MissingOverride"/>
+                  <module name="MultipleVariableDeclarations"/>
+                  <module name="ModifierOrder"/>
+                  <module name="NeedBraces"/>
+                  <module name="NoArrayTrailingComma"/>
+                  <module name="NoFinalizer"/>
+                  <module name="NonEmptyAtclauseDescription"/>
+                  <module name="OneStatementPerLine"/>
+                  <module name="OneTopLevelClass"/>
+                  <module name="OuterTypeFilename"/>
+                  <module name="OverloadMethodsDeclarationOrder"/>
+                  <module name="PackageDeclaration"/>
+                  <module name="RedundantImport"/>
+                  <module name="RegexpSinglelineJava">
+                    <property name="format" value="\s+$"/>
+                    <property name="message" value="File contains trailing whitespace."/>
+                  </module>
+                  <module name="RequireEmptyLineBeforeBlockTagGroup"/>
+                  <module name="RequireThis"/>
+                  <module name="RightCurly"/>
+                  <module name="SummaryJavadocCheck"/>
+                  <module name="SuppressWarningsHolder"/>
+                  <module name="UnnecessarySemicolonAfterOuterTypeDeclaration"/>
+                  <module name="UnnecessarySemicolonAfterTypeMemberDeclaration"/>
+                  <module name="UnnecessarySemicolonInEnumeration"/>
+                  <module name="UnnecessarySemicolonInTryWithResources"/>
+                  <module name="UnusedImports"/>
+                  <module name="UnusedLocalVariable"/>
+                  <module name="UpperEll"/>
+                  <module name="VariableDeclarationUsageDistance"/>
+                </module>
+                <property name="charset" value="${project.build.sourceEncoding}"/>
+                <property name="tabWidth" value="2"/>
+              </module>
+            </checkstyleRules>
+            <propertyExpansion>
+              project.basedir=${project.basedir}
+              project.build.sourceEncoding=${project.build.sourceEncoding}
+            </propertyExpansion>
+          </configuration>
+        </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
@@ -210,6 +291,16 @@
 
   <reporting>
     <plugins>
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <reportSets>

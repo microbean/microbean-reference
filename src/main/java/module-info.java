@@ -19,10 +19,11 @@
  */
 module org.microbean.reference {
 
-  exports org.microbean.reference;
+  exports org.microbean.reference2;
 
   requires transitive org.microbean.bean;
   requires transitive org.microbean.lang;
   requires org.microbean.qualifier;
+  requires org.microbean.scopelet;
 
 }

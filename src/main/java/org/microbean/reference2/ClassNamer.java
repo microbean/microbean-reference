@@ -23,8 +23,8 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-import org.microbean.bean2.Id;
-import org.microbean.bean2.Selector;
+import org.microbean.bean.Id;
+import org.microbean.bean.Selector;
 
 import org.microbean.lang.TypeAndElementSource;
 
@@ -32,6 +32,12 @@ import org.microbean.lang.TypeAndElementSource;
 public interface ClassNamer {
 
   public String className(final Selector s, final Id id);
+
+
+  /*
+   * Static methods.
+   */
+
 
   public static DeclaredType supertype(final TypeAndElementSource tes, final Id id) {
     final List<? extends TypeMirror> classes = id.types().classes();

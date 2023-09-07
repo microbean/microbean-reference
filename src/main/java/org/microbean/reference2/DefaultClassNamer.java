@@ -16,27 +16,18 @@ package org.microbean.reference2;
 import java.util.List;
 import java.util.Objects;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-
-import org.microbean.bean2.Bean;
-import org.microbean.bean2.BeanTypeList;
-import org.microbean.bean2.Id;
-import org.microbean.bean2.Selector;
-import org.microbean.bean2.Singleton;
+import org.microbean.bean.Bean;
+import org.microbean.bean.Id;
+import org.microbean.bean.Selector;
+import org.microbean.bean.Singleton;
 
 import org.microbean.lang.TypeAndElementSource;
 
-import org.microbean.lang.type.DelegatingTypeMirror;
-
-import static org.microbean.bean2.Qualifiers.anyAndDefaultQualifiers;
+import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
 
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
