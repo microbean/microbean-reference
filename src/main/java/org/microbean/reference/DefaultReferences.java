@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
@@ -67,7 +65,7 @@ public final class DefaultReferences<R> implements References<R> {
     this.instances = Objects.requireNonNull(bootstrapInstances, "bootstrapInstances");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
     this.rootCreation = this.creation();
-    
+
     Selector s = new Selector(Instances.class);
     Bean<?> b = this.beanSet().bean(s);
     if (b != null) {
@@ -175,7 +173,8 @@ public final class DefaultReferences<R> implements References<R> {
 
     private final Iterator<? extends Bean<?>> beanIterator;
 
-    private final AtomicReference<R> last;
+    // @GuardedBy("this")
+    private R r;
 
 
     /*
@@ -187,7 +186,6 @@ public final class DefaultReferences<R> implements References<R> {
       super();
       this.creation = Objects.requireNonNull(creation, "creation");
       this.beanIterator = Objects.requireNonNull(beanIterator, "beanIterator");
-      this.last = new AtomicReference<>();
     }
 
 
@@ -204,20 +202,27 @@ public final class DefaultReferences<R> implements References<R> {
     @Override // Iterator<R>
     public final R next() {
       final Bean<R> bean = this.beanIterator.next().cast();
-      final R r = DefaultReferences.this.reference(DefaultReferences.this.selector, bean, this.creation);
+      final R r = reference(selector, bean, this.creation);
       if (r != null) {
-        synchronized (DefaultReferences.this.ids) {
-          DefaultReferences.this.ids.putIfAbsent(r, bean.id());
+        synchronized (ids) {
+          ids.putIfAbsent(r, bean.id());
         }
       }
-      return this.last.updateAndGet(old -> r);
+      synchronized (this) {
+        this.r = r;
+      }
+      return r;
     }
 
     @Override // Iterator<R>
     public final void remove() {
-      final R r = this.last.getAndSet(null);
+      final R r;
+      synchronized (this) {
+        r = this.r;
+        this.r = null;
+      }
       if (r != null) {
-        DefaultReferences.this.destroy(r);
+        destroy(r);
       }
     }
 
