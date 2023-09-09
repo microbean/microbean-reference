@@ -30,7 +30,8 @@ import org.microbean.bean.Bean;
 import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
 import org.microbean.bean.References;
-import org.microbean.bean.Selector;
+import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.BeanSelector;
 import org.microbean.bean.Singleton;
 
 import org.microbean.lang.TypeAndElementSource;
@@ -65,19 +66,19 @@ public class DefaultClientProxier implements ClientProxier {
   }
 
   @Override // ClientProxier
-  public final boolean needsClientProxy(final Selector selector,
+  public final boolean needsClientProxy(final BeanSelector selector,
                                         final Id id,
                                         final Creation<?> c,
-                                        final References<?> r) {
+                                        final ReferenceSelector r) {
     return this.tester.needsClientProxy(selector, id, c, r);
   }
 
   @Override // ClientProxier
   @SuppressWarnings("unchecked")
-  public <R> R clientProxy(final Selector selector,
+  public <R> R clientProxy(final BeanSelector selector,
                            final Bean<R> bean,
                            final Creation<R> c,
-                           final References<?> r,
+                           final ReferenceSelector r,
                            final Instances instances) {
     return
       ((Proxy<R>)this.cache.computeIfAbsent(bean.id(),
@@ -104,14 +105,14 @@ public class DefaultClientProxier implements ClientProxier {
                         anyAndDefaultQualifiers(),
                         SINGLETON_ID),
                  (c, r) -> {
-                   return new DefaultClientProxier(r.<Predicate>reference(new Selector(Predicate.class),
+                   return new DefaultClientProxier(r.<Predicate>reference(new BeanSelector(Predicate.class),
                                                                           null,
                                                                           cast(c)),
                                                    precomputedProxies, // defensive copying guaranteed to happen downstream
-                                                   r.<ClientProxyClassSupplier>reference(new Selector(ClientProxyClassSupplier.class),
+                                                   r.<ClientProxyClassSupplier>reference(new BeanSelector(ClientProxyClassSupplier.class),
                                                                                          null,
                                                                                          cast(c)),
-                                                   r.<ClientProxyInstantiator>reference(new Selector(ClientProxyInstantiator.class),
+                                                   r.<ClientProxyInstantiator>reference(new BeanSelector(ClientProxyInstantiator.class),
                                                                                         null,
                                                                                         cast(c)));
       });
@@ -176,7 +177,7 @@ public class DefaultClientProxier implements ClientProxier {
     // will proxy.
     //
     // You don't need References because all a client proxy does is wrap an instance.
-    public <R> Class<? extends Proxy<R>> clientProxyClass(final Selector selector,
+    public <R> Class<? extends Proxy<R>> clientProxyClass(final BeanSelector selector,
                                                           final Bean<R> bean,
                                                           final Instances instances);
 
@@ -231,7 +232,7 @@ public class DefaultClientProxier implements ClientProxier {
 
     @Override
     @SuppressWarnings("unchecked")
-    public final <R> Class<? extends Proxy<R>> clientProxyClass(final Selector selector, final Bean<R> bean, final Instances instances) {
+    public final <R> Class<? extends Proxy<R>> clientProxyClass(final BeanSelector selector, final Bean<R> bean, final Instances instances) {
       final String className = this.namer.className(selector, bean.id());
       final ClassLoader cl = this.classLoaderSelector.classLoader(className);
       try {
@@ -249,13 +250,13 @@ public class DefaultClientProxier implements ClientProxier {
                           SINGLETON_ID),
                    (c, r) -> {
                      return
-                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new Selector(ClassNamer.class),
+                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new BeanSelector(ClassNamer.class),
                                                                                       null,
                                                                                       cast(c)),
-                                                              r.<ClassLoaderSelector>reference(new Selector(ClassLoaderSelector.class),
+                                                              r.<ClassLoaderSelector>reference(new BeanSelector(ClassLoaderSelector.class),
                                                                                                null,
                                                                                                cast(c)),
-                                                              r.<ClientProxyClassGenerator>reference(new Selector(ClientProxyClassGenerator.class),
+                                                              r.<ClientProxyClassGenerator>reference(new BeanSelector(ClientProxyClassGenerator.class),
                                                                                                      null,
                                                                                                      cast(c)));
         });
@@ -265,7 +266,7 @@ public class DefaultClientProxier implements ClientProxier {
     public static interface ClientProxyClassGenerator {
 
       public <R> UnloadedClientProxyClassDefinition<R> unloadedClientProxyClassDefinition(final String className,
-                                                                                          final Selector s,
+                                                                                          final BeanSelector s,
                                                                                           final Bean<R> b,
                                                                                           final Instances i); // yes, Instances, no, not References
 
@@ -283,10 +284,10 @@ public class DefaultClientProxier implements ClientProxier {
   @FunctionalInterface
   public static interface Predicate {
 
-    public boolean needsClientProxy(final Selector selector,
+    public boolean needsClientProxy(final BeanSelector selector,
                                     final Id id,
                                     final Creation<?> c,
-                                    final References<?> r);
+                                    final ReferenceSelector r);
 
   }
 
@@ -300,12 +301,12 @@ public class DefaultClientProxier implements ClientProxier {
     }
 
     @Override // Predicate
-    public final boolean needsClientProxy(final Selector selector,
+    public final boolean needsClientProxy(final BeanSelector selector,
                                           final Id id,
                                           final Creation<?> c,
-                                          final References<?> r) {
+                                          final ReferenceSelector r) {
       final Scope governingScope =
-        r.reference(new Selector(this.tes.declaredType(Scope.class), List.of(id.governingScopeId())),
+        r.reference(new BeanSelector(this.tes.declaredType(Scope.class), List.of(id.governingScopeId())),
                     null, // bean
                     cast(c));
       return governingScope != null && governingScope.normal();

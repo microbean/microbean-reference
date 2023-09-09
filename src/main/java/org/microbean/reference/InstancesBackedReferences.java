@@ -21,7 +21,8 @@ import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.References;
-import org.microbean.bean.Selector;
+import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.BeanSelector;
 
 import org.microbean.lang.TypeAndElementSource;
 
@@ -29,7 +30,8 @@ import static java.util.Collections.emptyIterator;
 
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
-final class InstancesBackedReferences<R> implements References<R> {
+@Deprecated(forRemoval = true)
+final class InstancesBackedReferences<R> implements References<R>, ReferenceSelector {
 
   private final Assignability assignability;
 
@@ -52,13 +54,18 @@ final class InstancesBackedReferences<R> implements References<R> {
   }
 
   @Override
+  public final void close() {
+
+  }
+
+  @Override
   public final <I> Creation<I> creation() {
     return
-      this.reference(new Selector(this.assignability,
-                                  this.tes.declaredType(null,
-                                                        this.tes.typeElement(Creation.class),
-                                                        this.tes.wildcardType(null, null)),
-                                  defaultQualifiers()),
+      this.reference(new BeanSelector(this.assignability,
+                                      this.tes.declaredType(null,
+                                                            this.tes.typeElement(Creation.class),
+                                                            this.tes.wildcardType(null, null)),
+                                      defaultQualifiers()),
                      null,
                      null);
   }
@@ -74,7 +81,7 @@ final class InstancesBackedReferences<R> implements References<R> {
   }
 
   @Override
-  public final <R> R reference(final Selector selector, final Bean<R> bean, final Creation<R> creation) {
+  public final <R> R reference(final BeanSelector selector, final Bean<R> bean, final Creation<R> creation) {
     return this.instances.instance(selector, bean, creation, this);
   }
 

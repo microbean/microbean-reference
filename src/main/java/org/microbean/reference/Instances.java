@@ -17,17 +17,17 @@ import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
-import org.microbean.bean.References;
-import org.microbean.bean.Selector;
+import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.BeanSelector;
 
 public interface Instances {
 
   public BeanSet beanSet();
 
-  public <I> I instance(final Selector selector,
+  public <I> I instance(final BeanSelector selector,
                         final Bean<I> bean,
                         final Creation<I> creation,
-                        final References<?> references);
+                        final ReferenceSelector referenceSelector);
 
   public boolean remove(final Id id);
   

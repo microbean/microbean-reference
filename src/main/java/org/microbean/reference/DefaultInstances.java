@@ -38,8 +38,8 @@ import org.microbean.bean.DefaultBeanSet;
 import org.microbean.bean.DefaultCreation;
 import org.microbean.bean.Factory;
 import org.microbean.bean.Id;
-import org.microbean.bean.References;
-import org.microbean.bean.Selector;
+import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.BeanSelector;
 import org.microbean.bean.Singleton;
 import org.microbean.bean.UnsatisfiedResolutionException;
 
@@ -66,7 +66,7 @@ class DefaultInstances implements Instances {
 
   private final TypeMirror scopeletType;
 
-  private final Selector anyScopeletSelector;
+  private final BeanSelector anyScopeletSelector;
 
   private final BeanSet beanSet;
 
@@ -77,7 +77,7 @@ class DefaultInstances implements Instances {
     this.assignability = Objects.requireNonNull(assignability, "assignability");
     this.tes = Objects.requireNonNull(tes, "tes");
     this.scopeletType = tes.declaredType(null, tes.typeElement(Scopelet.class), tes.wildcardType(null, null));
-    this.anyScopeletSelector = new Selector(assignability, this.scopeletType, List.of(anyQualifier()));
+    this.anyScopeletSelector = new BeanSelector(assignability, this.scopeletType, List.of(anyQualifier()));
     final Collection<Bean<?>> newBeans = new ArrayList<>(beans.size() + 5);
     newBeans.addAll(beans);
     newBeans.add(new SingletonScopelet().bean());
@@ -95,7 +95,7 @@ class DefaultInstances implements Instances {
     tv = (TypeVariable)e.getTypeParameters().get(0).asType();
     final TypeMirror t2 = tes.declaredType(null, e, tv);
     final TypeMirror t3 = tes.declaredType(null, e);
-    final Selector s = new Selector(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
+    final BeanSelector s = new BeanSelector(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
     newBeans.add(new Bean<>(new Id(List.of(t0, t1, t2, t3),
                                    anyAndDefaultQualifiers(),
                                    NONE_ID),
@@ -112,10 +112,10 @@ class DefaultInstances implements Instances {
   }
 
   @SuppressWarnings("unchecked")
-  public final <I> I instance(final Selector selector,
+  public final <I> I instance(final BeanSelector selector,
                               final Bean<I> bean, // nullable
                               final Creation<I> creation, // nullable
-                              final References<?> references) { // nullable
+                              final ReferenceSelector references) { // nullable
     final Bean<I> b;
     if (bean == null) {
       b = (Bean<I>)this.beanSet.bean(selector, DefaultInstances::handleInactiveScopelets);
@@ -136,11 +136,11 @@ class DefaultInstances implements Instances {
   private final <I> I instance(final Bean<I> bean,
                                final Function<? super Scopelet<?>, ? extends I> f,
                                final Creation<I> c,
-                               final References<?> r) {
+                               final ReferenceSelector r) {
     final Factory<I> factory = bean.factory();
     final I singleton = factory.singleton();
     if (singleton == null) {
-      final Selector scopeletSelector = new Selector(scopeletType, List.of(bean.id().governingScopeId()));
+      final BeanSelector scopeletSelector = new BeanSelector(scopeletType, List.of(bean.id().governingScopeId()));
       if (bean.equals(this.beanSet.bean(scopeletSelector, DefaultInstances::handleInactiveScopelets))) {
         return factory.create(c, r);
       }
@@ -152,7 +152,7 @@ class DefaultInstances implements Instances {
   public final boolean remove(final Id id) {
     return
       id != null &&
-      this.<Scopelet<?>>instance(new Selector(scopeletType, List.of(id.governingScopeId())), null, null, null).remove(id);
+      this.<Scopelet<?>>instance(new BeanSelector(scopeletType, List.of(id.governingScopeId())), null, null, null).remove(id);
   }
 
 
@@ -161,7 +161,7 @@ class DefaultInstances implements Instances {
    */
 
 
-  private static final Bean<?> handleInactiveScopelets(final Selector selector, final Collection<? extends Bean<?>> beans) {
+  private static final Bean<?> handleInactiveScopelets(final BeanSelector selector, final Collection<? extends Bean<?>> beans) {
     if (beans.size() < 2) { // 2 because we're disambiguating
       throw new IllegalArgumentException("beans: " + beans);
     }

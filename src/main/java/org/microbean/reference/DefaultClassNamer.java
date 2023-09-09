@@ -22,7 +22,7 @@ import javax.lang.model.element.TypeElement;
 
 import org.microbean.bean.Bean;
 import org.microbean.bean.Id;
-import org.microbean.bean.Selector;
+import org.microbean.bean.BeanSelector;
 import org.microbean.bean.Singleton;
 
 import org.microbean.lang.TypeAndElementSource;
@@ -40,7 +40,7 @@ public final class DefaultClassNamer implements ClassNamer {
   }
 
   @Override
-  public final String className(final Selector s, final Id id) {
+  public final String className(final BeanSelector s, final Id id) {
     final TypeElement supertypeElement = (TypeElement)ClassNamer.supertype(this.typeAndElementSource, id).asElement();
     final PackageElement supertypePackage = ClassNamer.packageElementOf(supertypeElement);
     final ModuleElement supertypeModule = (ModuleElement)supertypePackage.getEnclosingElement();

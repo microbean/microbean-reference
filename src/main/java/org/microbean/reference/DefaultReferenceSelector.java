@@ -13,10 +13,6 @@
  */
 package org.microbean.reference;
 
-import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.Objects;
 
 import java.util.function.Supplier;
@@ -35,11 +31,11 @@ import org.microbean.lang.TypeAndElementSource;
 
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
-public final class DefaultReferences<R> implements References<R>, ReferenceSelector {
-
-  private final Assignability assignability;
+public class DefaultReferenceSelector implements ReferenceSelector {
 
   private final TypeAndElementSource tes;
+  
+  private final Assignability assignability;
 
   // Hosts (hopefully non-existent) dependent objects of "real" Instances and "real" ClientProxier. Closed in the
   // close() method.
@@ -48,35 +44,19 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
   // A Supplier of Creations that backs the #creation() method.
   private final Supplier<? extends Creation<?>> creationSupplier;
 
-  // For the iterator() method, chooses what will be selected and iterated over.
-  private final BeanSelector selector;
-
-  // @GuardedBy("itself")
-  private final IdentityHashMap<R, Id> ids;
-
   // Treat as effectively final.
   private Instances instances;
 
   // Treat as effectively final.
   private ClientProxier clientProxier;
 
-  public DefaultReferences(final Assignability assignability,
-                           final TypeAndElementSource tes,
-                           final BeanSelector selector,
-                           final Collection<? extends Bean<?>> beans) {
-    this(assignability, tes, selector, new DefaultInstances(assignability, tes, beans), BootstrapClientProxier.INSTANCE);
-  }
-
-  public DefaultReferences(final Assignability assignability,
-                           final TypeAndElementSource tes,
-                           final BeanSelector selector,
-                           final Instances instances,
-                           final ClientProxier clientProxier) {
+  public DefaultReferenceSelector(final TypeAndElementSource tes,
+                                  final Assignability assignability,
+                                  final Instances instances,
+                                  final ClientProxier clientProxier) {
     super();
     this.tes = Objects.requireNonNull(tes, "tes");
     this.assignability = assignability == null ? new Assignability(tes) : assignability;
-    this.selector = Objects.requireNonNull(selector, "selector");
-    this.ids = new IdentityHashMap<>();
     this.instances = Objects.requireNonNull(instances, "instances");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
 
@@ -107,48 +87,24 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
 
     final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
     this.creationSupplier = () -> this.reference(creationSelector, creationBean, this.rootCreation.cast());
-
   }
 
-  @Override
+  @Override // ReferenceSelector
   public final BeanSet beanSet() {
     return this.instances.beanSet();
   }
 
-  // Destroys r if and only if it is (a) dependent and (b) supplied by get()
-  @Override
-  public final boolean destroy(final R r) {
-    if (r != null) {
-      synchronized (this.ids) {
-        return this.remove(this.ids.remove(r));
-      }
-    }
-    return false;
-  }
-
-  @Override // AutoCloseable
+  @Override // ReferenceSelector
   public final void close() {
-    synchronized (this.ids) {
-      final Iterator<Entry<R, Id>> i = this.ids.entrySet().iterator();
-      while (i.hasNext()) {
-        this.remove(i.next().getValue());
-        i.remove();
-      }
-    }
     this.rootCreation.close();
   }
 
-  @Override
-  public final Iterator<R> iterator() {
-    return new ReferenceIterator(this.creation(), this.beanSet().beans(this.selector).iterator());
-  }
-
-  @Override
+  @Override // ReferenceSelector
   public final <I> Creation<I> creation() {
     return this.creationSupplier.get().cast();
   }
 
-  @Override // References
+  @Override // ReferenceSelector
   public final <R> R reference(final BeanSelector selector,
                                Bean<R> bean,
                                Creation<R> c) {
@@ -172,83 +128,12 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
       this.instances.instance(selector, bean, c, this);
   }
 
-  private final boolean remove(final Id id) {
-    return id != null && this.instances.remove(id);
-  }
-
 
   /*
    * Inner and nested classes.
    */
 
-
-  private final class ReferenceIterator implements Iterator<R> {
-
-
-    /*
-     * Instance fields.
-     */
-
-
-    private final Creation<R> creation;
-
-    private final Iterator<? extends Bean<?>> beanIterator;
-
-    // @GuardedBy("this")
-    private R r;
-
-
-    /*
-     * Constructors.
-     */
-
-
-    private ReferenceIterator(final Creation<R> creation, final Iterator<? extends Bean<?>> beanIterator) {
-      super();
-      this.creation = Objects.requireNonNull(creation, "creation");
-      this.beanIterator = Objects.requireNonNull(beanIterator, "beanIterator");
-    }
-
-
-    /*
-     * Instance methods.
-     */
-
-
-    @Override // Iterator<R>
-    public final boolean hasNext() {
-      return this.beanIterator.hasNext();
-    }
-
-    @Override // Iterator<R>
-    public final R next() {
-      final Bean<R> bean = this.beanIterator.next().cast();
-      final R r = reference(selector, bean, this.creation);
-      if (r != null) {
-        synchronized (ids) {
-          ids.putIfAbsent(r, bean.id());
-        }
-      }
-      synchronized (this) {
-        this.r = r;
-      }
-      return r;
-    }
-
-    @Override // Iterator<R>
-    public final void remove() {
-      final R r;
-      synchronized (this) {
-        r = this.r;
-        this.r = null;
-      }
-      if (r != null) {
-        destroy(r);
-      }
-    }
-
-  }
-
+  
   private static final class BootstrapClientProxier implements ClientProxier {
 
     private static final BootstrapClientProxier INSTANCE = new BootstrapClientProxier();
@@ -305,6 +190,5 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
     }
 
   }
-
-
+  
 }
