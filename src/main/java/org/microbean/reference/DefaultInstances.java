@@ -70,9 +70,9 @@ class DefaultInstances implements Instances {
 
   private final BeanSet beanSet;
 
-  public <X> DefaultInstances(final Assignability assignability,
-                              final TypeAndElementSource tes,
-                              final Collection<? extends Bean<?>> beans) {
+  public DefaultInstances(final Assignability assignability,
+                          final TypeAndElementSource tes,
+                          final Collection<? extends Bean<?>> beans) {
     super();
     this.assignability = Objects.requireNonNull(assignability, "assignability");
     this.tes = Objects.requireNonNull(tes, "tes");
@@ -162,7 +162,7 @@ class DefaultInstances implements Instances {
 
 
   private static final Bean<?> handleInactiveScopelets(final Selector selector, final Collection<? extends Bean<?>> beans) {
-    if (beans.size() < 2) {
+    if (beans.size() < 2) { // 2 because we're disambiguating
       throw new IllegalArgumentException("beans: " + beans);
     }
     Bean<?> b2 = null;

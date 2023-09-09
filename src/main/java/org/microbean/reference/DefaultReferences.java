@@ -13,10 +13,13 @@
  */
 package org.microbean.reference;
 
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
+
+import java.util.function.Supplier;
 
 import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
@@ -41,30 +44,49 @@ public final class DefaultReferences<R> implements References<R> {
   // close() method.
   private final Creation<?> rootCreation;
 
+  // A Supplier of Creations that backs the #creation() method.
+  private final Supplier<? extends Creation<?>> creationSupplier;
+
   // For the iterator() method, chooses what will be selected and iterated over.
   private final Selector selector;
 
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
 
+  // Treat as effectively final.
   private Instances instances;
 
+  // Treat as effectively final.
   private ClientProxier clientProxier;
 
   public DefaultReferences(final Assignability assignability,
                            final TypeAndElementSource tes,
                            final Selector selector,
-                           final Instances bootstrapInstances,
+                           final Collection<? extends Bean<?>> beans) {
+    this(assignability, tes, selector, new DefaultInstances(assignability, tes, beans), BootstrapClientProxier.INSTANCE);
+  }
+
+  public DefaultReferences(final Assignability assignability,
+                           final TypeAndElementSource tes,
+                           final Selector selector,
+                           final Instances instances,
                            final ClientProxier clientProxier) {
     super();
     this.tes = Objects.requireNonNull(tes, "tes");
     this.assignability = assignability == null ? new Assignability(tes) : assignability;
     this.selector = Objects.requireNonNull(selector, "selector");
     this.ids = new IdentityHashMap<>();
-
-    this.instances = Objects.requireNonNull(bootstrapInstances, "bootstrapInstances");
+    this.instances = Objects.requireNonNull(instances, "instances");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
-    this.rootCreation = this.creation();
+
+    final Selector creationSelector =
+      new Selector(this.assignability,
+                   this.tes.declaredType(null,
+                                         this.tes.typeElement(Creation.class),
+                                         this.tes.wildcardType(null, null)), // or Object.class?
+                   defaultQualifiers());
+    // Note that BootstrapCreation does not implement AutoCloseableRegistry.
+    this.rootCreation = this.reference(creationSelector, BootstrapCreation.INSTANCE.cast());
 
     Selector s = new Selector(Instances.class);
     Bean<?> b = this.beanSet().bean(s);
@@ -81,6 +103,10 @@ public final class DefaultReferences<R> implements References<R> {
         Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
                                "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
     }
+
+    final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
+    this.creationSupplier = () -> this.reference(creationSelector, creationBean, this.rootCreation.cast());
+
   }
 
   @Override
@@ -118,13 +144,7 @@ public final class DefaultReferences<R> implements References<R> {
 
   @Override
   public final <I> Creation<I> creation() {
-    return
-      this.reference(new Selector(this.assignability,
-                                  this.tes.declaredType(null,
-                                                        this.tes.typeElement(Creation.class),
-                                                        this.tes.wildcardType(null, null)), // or Object.class?
-                                  defaultQualifiers()),
-                     BootstrapCreation.INSTANCE.cast()); // Note that BootstrapCreation does not implement AutoCloseableRegistry.
+    return this.creationSupplier.get().cast();
   }
 
   @Override // References
@@ -146,7 +166,7 @@ public final class DefaultReferences<R> implements References<R> {
       c = c.clone();
     }
     return
-      this.clientProxier.needsClientProxy(selector, bean.id(), c, this, this.instances) ?
+      this.clientProxier.needsClientProxy(selector, bean.id(), c, this) ?
       this.clientProxier.clientProxy(selector, bean, c, this, this.instances) :
       this.instances.instance(selector, bean, c, this);
   }
@@ -240,8 +260,7 @@ public final class DefaultReferences<R> implements References<R> {
     public final boolean needsClientProxy(final Selector s,
                                           final Id id,
                                           final Creation<?> c,
-                                          final References<?> r,
-                                          final Instances instances) {
+                                          final References<?> r) {
       return false;
     }
 

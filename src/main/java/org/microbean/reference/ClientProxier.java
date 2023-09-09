@@ -24,8 +24,7 @@ public interface ClientProxier {
   public boolean needsClientProxy(final Selector selector,
                                   final Id id,
                                   final Creation<?> c,
-                                  final References<?> r,
-                                  @Deprecated final Instances instances);
+                                  final References<?> r);
   
   public <R> R clientProxy(final Selector selector,
                            final Bean<R> bean, // maybe just Id? 

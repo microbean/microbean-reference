@@ -64,16 +64,12 @@ public class DefaultClientProxier implements ClientProxier {
     this.cpi = Objects.requireNonNull(cpi, "cpi");
   }
 
-  // (Most implementations that are aware of Scopes will need to use an Instances internally to find the Scope
-  // corresponding to the supplied Id and to see if it is a normal (as opposed to pseudo-) scope.)
-  // TODO: there are bootstrap issues, but maybe could just use References instead?
   @Override // ClientProxier
   public final boolean needsClientProxy(final Selector selector,
                                         final Id id,
                                         final Creation<?> c,
-                                        final References<?> r,
-                                        @Deprecated final Instances instances) {
-    return this.tester.needsClientProxy(selector, id, c, r, instances);
+                                        final References<?> r) {
+    return this.tester.needsClientProxy(selector, id, c, r);
   }
 
   @Override // ClientProxier
@@ -290,8 +286,7 @@ public class DefaultClientProxier implements ClientProxier {
     public boolean needsClientProxy(final Selector selector,
                                     final Id id,
                                     final Creation<?> c,
-                                    final References<?> r,
-                                    @Deprecated final Instances instances);
+                                    final References<?> r);
 
   }
 
@@ -308,13 +303,11 @@ public class DefaultClientProxier implements ClientProxier {
     public final boolean needsClientProxy(final Selector selector,
                                           final Id id,
                                           final Creation<?> c,
-                                          final References<?> r,
-                                          @Deprecated final Instances instances) {
+                                          final References<?> r) {
       final Scope governingScope =
-        instances.instance(new Selector(this.tes.declaredType(Scope.class), List.of(id.governingScopeId())),
-                           null, // bean
-                           cast(c),
-                           r);
+        r.reference(new Selector(this.tes.declaredType(Scope.class), List.of(id.governingScopeId())),
+                    null, // bean
+                    cast(c));
       return governingScope != null && governingScope.normal();
     }
 
