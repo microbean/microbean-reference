@@ -35,95 +35,25 @@ import org.microbean.lang.TypeAndElementSource;
 
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
-public final class DefaultReferences<R> implements References<R>, ReferenceSelector {
+public final class DefaultReferences<R> implements References<R> {
 
-  private final Assignability assignability;
+  private final ReferenceSelector referenceSelector;
 
-  private final TypeAndElementSource tes;
+  private final BeanSelector beanSelector;
 
-  // Hosts (hopefully non-existent) dependent objects of "real" Instances and "real" ClientProxier. Closed in the
-  // close() method.
-  private final Creation<?> rootCreation;
-
-  // A Supplier of Creations that backs the #creation() method.
-  private final Supplier<? extends Creation<?>> creationSupplier;
-
-  // For the iterator() method, chooses what will be selected and iterated over.
-  private final BeanSelector selector;
-
+  private final InstanceRemover instanceRemover;
+  
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
-
-  // Treat as effectively final.
-  private Instances instances;
-
-  // Treat as effectively final.
-  private ClientProxier clientProxier;
-
-  public DefaultReferences(final Assignability assignability,
-                           final TypeAndElementSource tes,
-                           final BeanSelector selector,
-                           final Collection<? extends Bean<?>> beans) {
-    this(assignability, tes, selector, new DefaultInstances(assignability, tes, beans), BootstrapClientProxier.INSTANCE);
-  }
-
-  public DefaultReferences(final Assignability assignability,
-                           final TypeAndElementSource tes,
-                           final BeanSelector selector,
-                           final Instances instances,
-                           final ClientProxier clientProxier) {
+  
+  public DefaultReferences(final BeanSelector beanSelector,
+                           final ReferenceSelector referenceSelector,
+                           final InstanceRemover instanceRemover) {
     super();
-    this.tes = Objects.requireNonNull(tes, "tes");
-    this.assignability = assignability == null ? new Assignability(tes) : assignability;
-    this.selector = Objects.requireNonNull(selector, "selector");
-    this.ids = new IdentityHashMap<>();
-    this.instances = Objects.requireNonNull(instances, "instances");
-    this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
-
-    final BeanSelector creationSelector =
-      new BeanSelector(this.assignability,
-                   this.tes.declaredType(null,
-                                         this.tes.typeElement(Creation.class),
-                                         this.tes.wildcardType(null, null)), // or Object.class?
-                   defaultQualifiers());
-    // Note that BootstrapCreation does not implement AutoCloseableRegistry.
-    this.rootCreation = this.reference(creationSelector, BootstrapCreation.INSTANCE.cast());
-
-    BeanSelector s = new BeanSelector(Instances.class);
-    Bean<?> b = this.beanSet().bean(s);
-    if (b != null) {
-      this.instances =
-        Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
-                               "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
-    }
-
-    s = new BeanSelector(ClientProxier.class);
-    b = this.beanSet().bean(s);
-    if (b != null) {
-      this.clientProxier =
-        Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
-                               "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
-    }
-
-    final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
-    this.creationSupplier = () -> this.reference(creationSelector, creationBean, this.rootCreation.cast());
-
-  }
-
-  @Override
-  public final BeanSet beanSet() {
-    return this.instances.beanSet();
-  }
-
-  // Destroys r if and only if it is (a) dependent and (b) supplied by get()
-  @Override
-  public final boolean destroy(final R r) {
-    if (r != null) {
-      synchronized (this.ids) {
-        return this.remove(this.ids.remove(r));
-      }
-    }
-    return false;
+    this.beanSelector = Objects.requireNonNull(beanSelector, "beanSelector");
+    this.referenceSelector = Objects.requireNonNull(referenceSelector, "referenceSelector");
+    this.instanceRemover = Objects.requireNonNull(instanceRemover, "instanceRemover");
+    this.ids = new IdentityHashMap<>();    
   }
 
   @Override // AutoCloseable
@@ -135,45 +65,26 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
         i.remove();
       }
     }
-    this.rootCreation.close();
+  }
+  
+  // Destroys r if and only if it is (a) dependent and (b) supplied by get()
+  @Override
+  public final boolean destroy(final R r) {
+    if (r != null) {
+      synchronized (this.ids) {
+        return this.remove(this.ids.remove(r));
+      }
+    }
+    return false;
   }
 
   @Override
   public final Iterator<R> iterator() {
-    return new ReferenceIterator(this.creation(), this.beanSet().beans(this.selector).iterator());
-  }
-
-  @Override
-  public final <I> Creation<I> creation() {
-    return this.creationSupplier.get().cast();
-  }
-
-  @Override // References
-  public final <R> R reference(final BeanSelector selector,
-                               Bean<R> bean,
-                               Creation<R> c) {
-    if (bean == null) {
-      final Bean<?> b = this.beanSet().bean(selector);
-      if (b == null) {
-        throw new UnsatisfiedResolutionException(selector);
-      }
-      bean = b.cast();
-    } else if (!selector.selects(bean)) {
-      throw new IllegalArgumentException("bean: " + bean);
-    }
-    if (c != null) {
-      // Critical. Clones c and registers the clone for subsequent closing with its ancestor. See
-      // org.microbean.bean.DefaultCreation for example, and DefaultAutoCloseableRegistry.
-      c = c.clone();
-    }
-    return
-      this.clientProxier.needsClientProxy(selector, bean.id(), c, this) ?
-      this.clientProxier.clientProxy(selector, bean, c, this, this.instances) :
-      this.instances.instance(selector, bean, c, this);
+    return new ReferenceIterator(this.referenceSelector.creation(), this.referenceSelector.beanSet().beans(this.beanSelector).iterator());
   }
 
   private final boolean remove(final Id id) {
-    return id != null && this.instances.remove(id);
+    return id != null && this.instanceRemover.remove(id);
   }
 
 
@@ -223,7 +134,7 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
     @Override // Iterator<R>
     public final R next() {
       final Bean<R> bean = this.beanIterator.next().cast();
-      final R r = reference(selector, bean, this.creation);
+      final R r = referenceSelector.reference(beanSelector, bean, this.creation);
       if (r != null) {
         synchronized (ids) {
           ids.putIfAbsent(r, bean.id());
@@ -248,63 +159,5 @@ public final class DefaultReferences<R> implements References<R>, ReferenceSelec
     }
 
   }
-
-  private static final class BootstrapClientProxier implements ClientProxier {
-
-    private static final BootstrapClientProxier INSTANCE = new BootstrapClientProxier();
-
-    private BootstrapClientProxier() {
-      super();
-    }
-
-    @Override // ClientProxier
-    public final boolean needsClientProxy(final BeanSelector s,
-                                          final Id id,
-                                          final Creation<?> c,
-                                          final ReferenceSelector r) {
-      return false;
-    }
-
-    @Override // ClientProxier
-    public final <R> R clientProxy(final BeanSelector s,
-                                   final Bean<R> b,
-                                   final Creation<R> c,
-                                   final ReferenceSelector r,
-                                   final Instances instances) {
-      throw new DynamicClientProxiesNotSupportedException();
-    }
-
-  }
-
-  // Note that this does not implement (or contain, or reference) AutoCloseableRegistry, so is suitable only for cases
-  // where it is known that no dependent objects will be created. One such case (the only?) is when a Creation itself is
-  // being retrieved.
-  private static final class BootstrapCreation<I> implements Creation<I> {
-
-    private static final BootstrapCreation<?> INSTANCE = new BootstrapCreation<>();
-
-    private BootstrapCreation() {
-      super();
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public final Creation<I> clone() {
-      try {
-        return (Creation<I>)super.clone();
-      } catch (final CloneNotSupportedException e) {
-        throw new AssertionError(e.getMessage(), e);
-      }
-    }
-
-    // MUST be idempotent
-    // During creation (as opposed to destruction) this method should throw an IllegalStateException.
-    @Override // AutoCloseable
-    public final void close() {
-
-    }
-
-  }
-
 
 }

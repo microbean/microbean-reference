@@ -13,19 +13,11 @@
  */
 package org.microbean.reference;
 
-import org.microbean.bean.Bean;
-import org.microbean.bean.BeanSelector;
-import org.microbean.bean.BeanSet;
-import org.microbean.bean.Creation;
-import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.Id;
 
-public interface Instances extends InstanceRemover {
+@FunctionalInterface
+public interface InstanceRemover {
 
-  public BeanSet beanSet();
-
-  public <I> I instance(final BeanSelector selector,
-                        final Bean<I> bean,
-                        final Creation<I> creation,
-                        final ReferenceSelector referenceSelector);
+  public boolean remove(final Id id);
   
 }

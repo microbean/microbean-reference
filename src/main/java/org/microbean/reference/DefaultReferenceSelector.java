@@ -21,6 +21,7 @@ import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
+import org.microbean.bean.CreationSupplier;
 import org.microbean.bean.Id;
 import org.microbean.bean.BeanSelector;
 import org.microbean.bean.References;
@@ -42,7 +43,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
   private final Creation<?> rootCreation;
 
   // A Supplier of Creations that backs the #creation() method.
-  private final Supplier<? extends Creation<?>> creationSupplier;
+  private final CreationSupplier creationSupplier;
 
   // Treat as effectively final.
   private Instances instances;
@@ -86,7 +87,26 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     }
 
     final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
-    this.creationSupplier = () -> this.reference(creationSelector, creationBean, this.rootCreation.cast());
+    this.creationSupplier = new CreationSupplier() {        
+        @Override
+        public final <I> Creation<I> creation() {
+          return DefaultReferenceSelector.this.reference(creationSelector, creationBean.cast(), rootCreation.cast());
+        }
+      };
+  }
+
+  // No bootstrapping, no validation
+  public DefaultReferenceSelector(final TypeAndElementSource tes,
+                                  final Assignability assignability,
+                                  final Instances instances,
+                                  final ClientProxier clientProxier,
+                                  final CreationSupplier creationSupplier) {
+    this.tes = Objects.requireNonNull(tes, "tes");
+    this.assignability = assignability == null ? new Assignability(tes) : assignability;
+    this.instances = Objects.requireNonNull(instances, "instances");
+    this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
+    this.creationSupplier = Objects.requireNonNull(creationSupplier, "creationSupplier");
+    this.rootCreation = BootstrapCreation.INSTANCE;
   }
 
   @Override // ReferenceSelector
@@ -101,7 +121,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
 
   @Override // ReferenceSelector
   public final <I> Creation<I> creation() {
-    return this.creationSupplier.get().cast();
+    return this.creationSupplier.creation();
   }
 
   @Override // ReferenceSelector
