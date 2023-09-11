@@ -37,15 +37,20 @@ import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
 public final class DefaultReferences<R> implements References<R> {
 
-  private final ReferenceSelector referenceSelector;
-
   private final BeanSelectionCriteria beanSelectionCriteria;
 
+  private final ReferenceSelector referenceSelector;
+
   private final InstanceRemover instanceRemover;
-  
+
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
-  
+
+  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria,
+                           final DefaultReferenceSelector referenceSelector) {
+    this(beanSelectionCriteria, referenceSelector, referenceSelector);
+  }
+
   public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria,
                            final ReferenceSelector referenceSelector,
                            final InstanceRemover instanceRemover) {
@@ -53,7 +58,7 @@ public final class DefaultReferences<R> implements References<R> {
     this.beanSelectionCriteria = Objects.requireNonNull(beanSelectionCriteria, "beanSelectionCriteria");
     this.referenceSelector = Objects.requireNonNull(referenceSelector, "referenceSelector");
     this.instanceRemover = Objects.requireNonNull(instanceRemover, "instanceRemover");
-    this.ids = new IdentityHashMap<>();    
+    this.ids = new IdentityHashMap<>();
   }
 
   @Override // AutoCloseable
@@ -66,7 +71,7 @@ public final class DefaultReferences<R> implements References<R> {
       }
     }
   }
-  
+
   // Destroys r if and only if it is (a) dependent and (b) supplied by get()
   @Override
   public final boolean destroy(final R r) {
@@ -80,7 +85,9 @@ public final class DefaultReferences<R> implements References<R> {
 
   @Override
   public final Iterator<R> iterator() {
-    return new ReferenceIterator(this.referenceSelector.creation(), this.referenceSelector.beanSet().beans(this.beanSelectionCriteria).iterator());
+    return
+      new ReferenceIterator(this.referenceSelector.creation(),
+                            this.referenceSelector.beanSet().beans(this.beanSelectionCriteria).iterator());
   }
 
   private final boolean remove(final Id id) {

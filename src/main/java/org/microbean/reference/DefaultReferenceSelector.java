@@ -20,13 +20,13 @@ import java.util.function.Supplier;
 
 import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
+import org.microbean.bean.BeanSelectionCriteria;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.CreationSupplier;
 import org.microbean.bean.Id;
-import org.microbean.bean.BeanSelectionCriteria;
-import org.microbean.bean.References;
 import org.microbean.bean.ReferenceSelector;
+import org.microbean.bean.References;
 import org.microbean.bean.UnsatisfiedResolutionException;
 
 import org.microbean.lang.TypeAndElementSource;
@@ -35,7 +35,7 @@ import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
 import static org.microbean.lang.Lang.typeAndElementSource;
 
-public class DefaultReferenceSelector implements ReferenceSelector {
+public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemover {
 
   private final TypeAndElementSource tes;
 
@@ -164,6 +164,11 @@ public class DefaultReferenceSelector implements ReferenceSelector {
       this.clientProxier.needsClientProxy(beanSelectionCriteria, bean.id(), c, this) ?
       this.clientProxier.clientProxy(beanSelectionCriteria, bean, c, this, this.instanceManager) :
       this.instanceManager.instance(beanSelectionCriteria, bean, c, this);
+  }
+
+  @Override // InstanceRemover
+  public final boolean remove(final Id id) {
+    return this.instanceManager.remove(id);
   }
 
 
