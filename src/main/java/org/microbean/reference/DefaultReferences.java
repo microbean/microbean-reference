@@ -26,7 +26,7 @@ import org.microbean.bean.Bean;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 import org.microbean.bean.References;
 import org.microbean.bean.ReferenceSelector;
 import org.microbean.bean.UnsatisfiedResolutionException;
@@ -39,18 +39,18 @@ public final class DefaultReferences<R> implements References<R> {
 
   private final ReferenceSelector referenceSelector;
 
-  private final BeanSelector beanSelector;
+  private final BeanSelectionCriteria beanSelectionCriteria;
 
   private final InstanceRemover instanceRemover;
   
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
   
-  public DefaultReferences(final BeanSelector beanSelector,
+  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria,
                            final ReferenceSelector referenceSelector,
                            final InstanceRemover instanceRemover) {
     super();
-    this.beanSelector = Objects.requireNonNull(beanSelector, "beanSelector");
+    this.beanSelectionCriteria = Objects.requireNonNull(beanSelectionCriteria, "beanSelectionCriteria");
     this.referenceSelector = Objects.requireNonNull(referenceSelector, "referenceSelector");
     this.instanceRemover = Objects.requireNonNull(instanceRemover, "instanceRemover");
     this.ids = new IdentityHashMap<>();    
@@ -80,7 +80,7 @@ public final class DefaultReferences<R> implements References<R> {
 
   @Override
   public final Iterator<R> iterator() {
-    return new ReferenceIterator(this.referenceSelector.creation(), this.referenceSelector.beanSet().beans(this.beanSelector).iterator());
+    return new ReferenceIterator(this.referenceSelector.creation(), this.referenceSelector.beanSet().beans(this.beanSelectionCriteria).iterator());
   }
 
   private final boolean remove(final Id id) {
@@ -134,7 +134,7 @@ public final class DefaultReferences<R> implements References<R> {
     @Override // Iterator<R>
     public final R next() {
       final Bean<R> bean = this.beanIterator.next().cast();
-      final R r = referenceSelector.reference(beanSelector, bean, this.creation);
+      final R r = referenceSelector.reference(beanSelectionCriteria, bean, this.creation);
       if (r != null) {
         synchronized (ids) {
           ids.putIfAbsent(r, bean.id());

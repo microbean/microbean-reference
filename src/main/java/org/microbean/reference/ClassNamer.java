@@ -24,14 +24,14 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 import org.microbean.bean.Id;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 
 import org.microbean.lang.TypeAndElementSource;
 
 @FunctionalInterface
 public interface ClassNamer {
 
-  public String className(final BeanSelector s, final Id id);
+  public String className(final BeanSelectionCriteria s, final Id id);
 
 
   /*

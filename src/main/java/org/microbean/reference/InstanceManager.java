@@ -14,16 +14,16 @@
 package org.microbean.reference;
 
 import org.microbean.bean.Bean;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.ReferenceSelector;
 
-public interface Instances extends InstanceRemover {
+public interface InstanceManager extends InstanceRemover {
 
   public BeanSet beanSet();
 
-  public <I> I instance(final BeanSelector selector,
+  public <I> I instance(final BeanSelectionCriteria beanSelectionCriteria,
                         final Bean<I> bean,
                         final Creation<I> creation,
                         final ReferenceSelector referenceSelector);

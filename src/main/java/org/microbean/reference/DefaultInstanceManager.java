@@ -39,7 +39,7 @@ import org.microbean.bean.DefaultCreation;
 import org.microbean.bean.Factory;
 import org.microbean.bean.Id;
 import org.microbean.bean.ReferenceSelector;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 import org.microbean.bean.Singleton;
 import org.microbean.bean.UnsatisfiedResolutionException;
 
@@ -58,26 +58,26 @@ import static org.microbean.bean.Qualifiers.defaultQualifiers;
 import static org.microbean.scope.Scope.NONE_ID;
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
-class DefaultInstances implements Instances {
-  
+class DefaultInstanceManager implements InstanceManager {
+
   private final Assignability assignability;
 
   private final TypeAndElementSource tes;
 
   private final TypeMirror scopeletType;
 
-  private final BeanSelector anyScopeletSelector;
+  private final BeanSelectionCriteria anyScopeletSelector;
 
   private final BeanSet beanSet;
 
-  public DefaultInstances(final Assignability assignability,
-                          final TypeAndElementSource tes,
-                          final Collection<? extends Bean<?>> beans) {
+  public DefaultInstanceManager(final TypeAndElementSource tes,
+                                final Assignability assignability,
+                                final Collection<? extends Bean<?>> beans) {
     super();
     this.assignability = Objects.requireNonNull(assignability, "assignability");
     this.tes = Objects.requireNonNull(tes, "tes");
     this.scopeletType = tes.declaredType(null, tes.typeElement(Scopelet.class), tes.wildcardType(null, null));
-    this.anyScopeletSelector = new BeanSelector(assignability, this.scopeletType, List.of(anyQualifier()));
+    this.anyScopeletSelector = new BeanSelectionCriteria(assignability, this.scopeletType, List.of(anyQualifier()));
     final Collection<Bean<?>> newBeans = new ArrayList<>(beans.size() + 5);
     newBeans.addAll(beans);
     newBeans.add(new SingletonScopelet().bean());
@@ -95,12 +95,12 @@ class DefaultInstances implements Instances {
     tv = (TypeVariable)e.getTypeParameters().get(0).asType();
     final TypeMirror t2 = tes.declaredType(null, e, tv);
     final TypeMirror t3 = tes.declaredType(null, e);
-    final BeanSelector s = new BeanSelector(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
+    final BeanSelectionCriteria s = new BeanSelectionCriteria(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
     newBeans.add(new Bean<>(new Id(List.of(t0, t1, t2, t3),
                                    anyAndDefaultQualifiers(),
                                    NONE_ID),
                             (c, r) -> new DefaultCreation<>(r.reference(s, cast(c)))));
-    newBeans.add(new Bean<>(new Id(List.of(tes.declaredType(DefaultInstances.class)),
+    newBeans.add(new Bean<>(new Id(List.of(tes.declaredType(DefaultInstanceManager.class)),
                                    anyAndDefaultQualifiers(),
                                    SINGLETON_ID),
                             new Singleton<>(this)));
@@ -112,18 +112,18 @@ class DefaultInstances implements Instances {
   }
 
   @SuppressWarnings("unchecked")
-  public final <I> I instance(final BeanSelector selector,
+  public final <I> I instance(final BeanSelectionCriteria beanSelectionCriteria,
                               final Bean<I> bean, // nullable
                               final Creation<I> creation, // nullable
                               final ReferenceSelector references) { // nullable
     final Bean<I> b;
     if (bean == null) {
-      b = (Bean<I>)this.beanSet.bean(selector, DefaultInstances::handleInactiveScopelets);
+      b = (Bean<I>)this.beanSet.bean(beanSelectionCriteria, DefaultInstanceManager::handleInactiveScopelets);
       if (b == null) {
-        throw new UnsatisfiedResolutionException(selector);
+        throw new UnsatisfiedResolutionException(beanSelectionCriteria);
       }
-    } else if (!selector.selects(bean)) {
-      throw new IllegalArgumentException("!selector.selects(bean); selector: " + selector + "; bean: " + bean);
+    } else if (!beanSelectionCriteria.selects(bean)) {
+      throw new IllegalArgumentException("!beanSelectionCriteria.selects(bean); beanSelectionCriteria: " + beanSelectionCriteria + "; bean: " + bean);
     } else {
       b = bean;
     }
@@ -140,11 +140,11 @@ class DefaultInstances implements Instances {
     final Factory<I> factory = bean.factory();
     final I singleton = factory.singleton();
     if (singleton == null) {
-      final BeanSelector scopeletSelector = new BeanSelector(scopeletType, List.of(bean.id().governingScopeId()));
-      if (bean.equals(this.beanSet.bean(scopeletSelector, DefaultInstances::handleInactiveScopelets))) {
+      final BeanSelectionCriteria scopeletBeanSelectionCriteria = new BeanSelectionCriteria(scopeletType, List.of(bean.id().governingScopeId()));
+      if (bean.equals(this.beanSet.bean(scopeletBeanSelectionCriteria, DefaultInstanceManager::handleInactiveScopelets))) {
         return factory.create(c, r);
       }
-      return f.apply((Scopelet<?>)this.instance(scopeletSelector, null, c, r));
+      return f.apply((Scopelet<?>)this.instance(scopeletBeanSelectionCriteria, null, c, r));
     }
     return singleton;
   }
@@ -152,7 +152,7 @@ class DefaultInstances implements Instances {
   public final boolean remove(final Id id) {
     return
       id != null &&
-      this.<Scopelet<?>>instance(new BeanSelector(scopeletType, List.of(id.governingScopeId())), null, null, null).remove(id);
+      this.<Scopelet<?>>instance(new BeanSelectionCriteria(scopeletType, List.of(id.governingScopeId())), null, null, null).remove(id);
   }
 
 
@@ -161,7 +161,8 @@ class DefaultInstances implements Instances {
    */
 
 
-  private static final Bean<?> handleInactiveScopelets(final BeanSelector selector, final Collection<? extends Bean<?>> beans) {
+  // Invoked by method reference only as part of BeanSet#bean(BeanSelectionCriteria, BiFunction).
+  private static final Bean<?> handleInactiveScopelets(final BeanSelectionCriteria beanSelectionCriteria, final Collection<? extends Bean<?>> beans) {
     if (beans.size() < 2) { // 2 because we're disambiguating
       throw new IllegalArgumentException("beans: " + beans);
     }
@@ -217,7 +218,7 @@ class DefaultInstances implements Instances {
       }
     }
     if (s2 == null) {
-      throw new AmbiguousResolutionException(selector,
+      throw new AmbiguousResolutionException(beanSelectionCriteria,
                                              beans,
                                              "TODO: this message needs to be better; can't resolve these alternates: " + beans);
     }

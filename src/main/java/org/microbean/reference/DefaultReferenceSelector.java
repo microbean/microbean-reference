@@ -13,6 +13,7 @@
  */
 package org.microbean.reference;
 
+import java.util.Collection;
 import java.util.Objects;
 
 import java.util.function.Supplier;
@@ -23,7 +24,7 @@ import org.microbean.bean.BeanSet;
 import org.microbean.bean.Creation;
 import org.microbean.bean.CreationSupplier;
 import org.microbean.bean.Id;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 import org.microbean.bean.References;
 import org.microbean.bean.ReferenceSelector;
 import org.microbean.bean.UnsatisfiedResolutionException;
@@ -32,10 +33,12 @@ import org.microbean.lang.TypeAndElementSource;
 
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
+import static org.microbean.lang.Lang.typeAndElementSource;
+
 public class DefaultReferenceSelector implements ReferenceSelector {
 
   private final TypeAndElementSource tes;
-  
+
   private final Assignability assignability;
 
   // Hosts (hopefully non-existent) dependent objects of "real" Instances and "real" ClientProxier. Closed in the
@@ -46,23 +49,38 @@ public class DefaultReferenceSelector implements ReferenceSelector {
   private final CreationSupplier creationSupplier;
 
   // Treat as effectively final.
-  private Instances instances;
+  private InstanceManager instanceManager;
 
   // Treat as effectively final.
   private ClientProxier clientProxier;
 
+  public DefaultReferenceSelector(final Collection<? extends Bean<?>> beans) {
+    this(typeAndElementSource(), beans);
+  }
+
+  public DefaultReferenceSelector(final TypeAndElementSource tes,
+                                  final Collection<? extends Bean<?>> beans) {
+    this(tes, new Assignability(tes), beans);
+  }
+
   public DefaultReferenceSelector(final TypeAndElementSource tes,
                                   final Assignability assignability,
-                                  final Instances instances,
+                                  final Collection<? extends Bean<?>> beans) {
+    this(tes, assignability, new DefaultInstanceManager(tes, assignability, beans), BootstrapClientProxier.INSTANCE);
+  }
+
+  public DefaultReferenceSelector(final TypeAndElementSource tes,
+                                  final Assignability assignability,
+                                  final InstanceManager instanceManager,
                                   final ClientProxier clientProxier) {
     super();
     this.tes = Objects.requireNonNull(tes, "tes");
     this.assignability = assignability == null ? new Assignability(tes) : assignability;
-    this.instances = Objects.requireNonNull(instances, "instances");
+    this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
 
-    final BeanSelector creationSelector =
-      new BeanSelector(this.assignability,
+    final BeanSelectionCriteria creationSelector =
+      new BeanSelectionCriteria(this.assignability,
                    this.tes.declaredType(null,
                                          this.tes.typeElement(Creation.class),
                                          this.tes.wildcardType(null, null)), // or Object.class?
@@ -70,15 +88,15 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     // Note that BootstrapCreation does not implement AutoCloseableRegistry.
     this.rootCreation = this.reference(creationSelector, BootstrapCreation.INSTANCE.cast());
 
-    BeanSelector s = new BeanSelector(Instances.class);
+    BeanSelectionCriteria s = new BeanSelectionCriteria(InstanceManager.class);
     Bean<?> b = this.beanSet().bean(s);
     if (b != null) {
-      this.instances =
+      this.instanceManager =
         Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
                                "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
     }
 
-    s = new BeanSelector(ClientProxier.class);
+    s = new BeanSelectionCriteria(ClientProxier.class);
     b = this.beanSet().bean(s);
     if (b != null) {
       this.clientProxier =
@@ -87,7 +105,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     }
 
     final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
-    this.creationSupplier = new CreationSupplier() {        
+    this.creationSupplier = new CreationSupplier() {
         @Override
         public final <I> Creation<I> creation() {
           return DefaultReferenceSelector.this.reference(creationSelector, creationBean.cast(), rootCreation.cast());
@@ -98,12 +116,12 @@ public class DefaultReferenceSelector implements ReferenceSelector {
   // No bootstrapping, no validation
   public DefaultReferenceSelector(final TypeAndElementSource tes,
                                   final Assignability assignability,
-                                  final Instances instances,
+                                  final InstanceManager instanceManager,
                                   final ClientProxier clientProxier,
                                   final CreationSupplier creationSupplier) {
     this.tes = Objects.requireNonNull(tes, "tes");
     this.assignability = assignability == null ? new Assignability(tes) : assignability;
-    this.instances = Objects.requireNonNull(instances, "instances");
+    this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
     this.creationSupplier = Objects.requireNonNull(creationSupplier, "creationSupplier");
     this.rootCreation = BootstrapCreation.INSTANCE;
@@ -111,7 +129,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
 
   @Override // ReferenceSelector
   public final BeanSet beanSet() {
-    return this.instances.beanSet();
+    return this.instanceManager.beanSet();
   }
 
   @Override // ReferenceSelector
@@ -125,16 +143,16 @@ public class DefaultReferenceSelector implements ReferenceSelector {
   }
 
   @Override // ReferenceSelector
-  public final <R> R reference(final BeanSelector selector,
+  public final <R> R reference(final BeanSelectionCriteria beanSelectionCriteria,
                                Bean<R> bean,
                                Creation<R> c) {
     if (bean == null) {
-      final Bean<?> b = this.beanSet().bean(selector);
+      final Bean<?> b = this.beanSet().bean(beanSelectionCriteria);
       if (b == null) {
-        throw new UnsatisfiedResolutionException(selector);
+        throw new UnsatisfiedResolutionException(beanSelectionCriteria);
       }
       bean = b.cast();
-    } else if (!selector.selects(bean)) {
+    } else if (!beanSelectionCriteria.selects(bean)) {
       throw new IllegalArgumentException("bean: " + bean);
     }
     if (c != null) {
@@ -143,9 +161,9 @@ public class DefaultReferenceSelector implements ReferenceSelector {
       c = c.clone();
     }
     return
-      this.clientProxier.needsClientProxy(selector, bean.id(), c, this) ?
-      this.clientProxier.clientProxy(selector, bean, c, this, this.instances) :
-      this.instances.instance(selector, bean, c, this);
+      this.clientProxier.needsClientProxy(beanSelectionCriteria, bean.id(), c, this) ?
+      this.clientProxier.clientProxy(beanSelectionCriteria, bean, c, this, this.instanceManager) :
+      this.instanceManager.instance(beanSelectionCriteria, bean, c, this);
   }
 
 
@@ -153,7 +171,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
    * Inner and nested classes.
    */
 
-  
+
   private static final class BootstrapClientProxier implements ClientProxier {
 
     private static final BootstrapClientProxier INSTANCE = new BootstrapClientProxier();
@@ -163,7 +181,7 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     }
 
     @Override // ClientProxier
-    public final boolean needsClientProxy(final BeanSelector s,
+    public final boolean needsClientProxy(final BeanSelectionCriteria s,
                                           final Id id,
                                           final Creation<?> c,
                                           final ReferenceSelector r) {
@@ -171,11 +189,11 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     }
 
     @Override // ClientProxier
-    public final <R> R clientProxy(final BeanSelector s,
+    public final <R> R clientProxy(final BeanSelectionCriteria s,
                                    final Bean<R> b,
                                    final Creation<R> c,
                                    final ReferenceSelector r,
-                                   final Instances instances) {
+                                   final InstanceManager instanceManager) {
       throw new DynamicClientProxiesNotSupportedException();
     }
 
@@ -210,5 +228,5 @@ public class DefaultReferenceSelector implements ReferenceSelector {
     }
 
   }
-  
+
 }

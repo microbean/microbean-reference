@@ -18,19 +18,19 @@ import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
 import org.microbean.bean.References;
 import org.microbean.bean.ReferenceSelector;
-import org.microbean.bean.BeanSelector;
+import org.microbean.bean.BeanSelectionCriteria;
 
 public interface ClientProxier {
 
-  public boolean needsClientProxy(final BeanSelector selector,
+  public boolean needsClientProxy(final BeanSelectionCriteria beanSelectionCriteria,
                                   final Id id,
                                   final Creation<?> c,
                                   final ReferenceSelector r);
   
-  public <R> R clientProxy(final BeanSelector selector,
+  public <R> R clientProxy(final BeanSelectionCriteria beanSelectionCriteria,
                            final Bean<R> bean, // maybe just Id? 
                            final Creation<R> c,
                            final ReferenceSelector r,
-                           final Instances instances);
+                           final InstanceManager instanceManager);
   
 }
