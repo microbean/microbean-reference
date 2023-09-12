@@ -58,7 +58,8 @@ import static org.microbean.bean.Qualifiers.defaultQualifiers;
 import static org.microbean.scope.Scope.NONE_ID;
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
-class DefaultInstanceManager implements InstanceManager {
+// Public mostly only for testing scenarios.
+public final class DefaultInstanceManager implements InstanceManager {
 
   private final Assignability assignability;
 
@@ -95,11 +96,12 @@ class DefaultInstanceManager implements InstanceManager {
     tv = (TypeVariable)e.getTypeParameters().get(0).asType();
     final TypeMirror t2 = tes.declaredType(null, e, tv);
     final TypeMirror t3 = tes.declaredType(null, e);
-    final BeanSelectionCriteria s = new BeanSelectionCriteria(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
+    final BeanSelectionCriteria bsc =
+      new BeanSelectionCriteria(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
     newBeans.add(new Bean<>(new Id(List.of(t0, t1, t2, t3),
                                    anyAndDefaultQualifiers(),
                                    NONE_ID),
-                            (c, r) -> new DefaultCreation<>(r.reference(s, cast(c)))));
+                            (c, r) -> new DefaultCreation<>(r.reference(bsc, cast(c)))));
     newBeans.add(new Bean<>(new Id(List.of(tes.declaredType(DefaultInstanceManager.class)),
                                    anyAndDefaultQualifiers(),
                                    SINGLETON_ID),
@@ -115,7 +117,7 @@ class DefaultInstanceManager implements InstanceManager {
   public final <I> I instance(final BeanSelectionCriteria beanSelectionCriteria,
                               final Bean<I> bean, // nullable
                               final Creation<I> creation, // nullable
-                              final ReferenceSelector references) { // nullable
+                              final ReferenceSelector referenceSelector) { // nullable
     final Bean<I> b;
     if (bean == null) {
       b = (Bean<I>)this.beanSet.bean(beanSelectionCriteria, DefaultInstanceManager::handleInactiveScopelets);
@@ -123,28 +125,33 @@ class DefaultInstanceManager implements InstanceManager {
         throw new UnsatisfiedResolutionException(beanSelectionCriteria);
       }
     } else if (!beanSelectionCriteria.selects(bean)) {
-      throw new IllegalArgumentException("!beanSelectionCriteria.selects(bean); beanSelectionCriteria: " + beanSelectionCriteria + "; bean: " + bean);
+      throw new IllegalArgumentException("!beanSelectionCriteria.selects(bean); beanSelectionCriteria: " +
+                                         beanSelectionCriteria +
+                                         "; bean: "
+                                         + bean);
     } else {
       b = bean;
     }
-    return this.instance(b,
-                         s -> s.instance(b.id(), b.factory(), creation, references),
-                         creation,
-                         references);
+    return
+      this.instance(b,
+                    s -> s.instance(b.id(), b.factory(), creation, referenceSelector),
+                    creation,
+                    referenceSelector);
   }
 
   private final <I> I instance(final Bean<I> bean,
                                final Function<? super Scopelet<?>, ? extends I> f,
-                               final Creation<I> c,
-                               final ReferenceSelector r) {
+                               final Creation<I> creation,
+                               final ReferenceSelector referenceSelector) {
     final Factory<I> factory = bean.factory();
     final I singleton = factory.singleton();
     if (singleton == null) {
-      final BeanSelectionCriteria scopeletBeanSelectionCriteria = new BeanSelectionCriteria(scopeletType, List.of(bean.id().governingScopeId()));
+      final BeanSelectionCriteria scopeletBeanSelectionCriteria =
+        new BeanSelectionCriteria(scopeletType, List.of(bean.id().governingScopeId()));
       if (bean.equals(this.beanSet.bean(scopeletBeanSelectionCriteria, DefaultInstanceManager::handleInactiveScopelets))) {
-        return factory.create(c, r);
+        return factory.create(creation, referenceSelector);
       }
-      return f.apply((Scopelet<?>)this.instance(scopeletBeanSelectionCriteria, null, c, r));
+      return f.apply((Scopelet<?>)this.instance(scopeletBeanSelectionCriteria, null, creation, referenceSelector));
     }
     return singleton;
   }
@@ -152,7 +159,11 @@ class DefaultInstanceManager implements InstanceManager {
   public final boolean remove(final Id id) {
     return
       id != null &&
-      this.<Scopelet<?>>instance(new BeanSelectionCriteria(scopeletType, List.of(id.governingScopeId())), null, null, null).remove(id);
+      this.<Scopelet<?>>instance(new BeanSelectionCriteria(scopeletType, List.of(id.governingScopeId())),
+                                 null, // Factory
+                                 null, // Creation
+                                 null) // ReferenceSelector
+        .remove(id);
   }
 
 
@@ -162,7 +173,8 @@ class DefaultInstanceManager implements InstanceManager {
 
 
   // Invoked by method reference only as part of BeanSet#bean(BeanSelectionCriteria, BiFunction).
-  private static final Bean<?> handleInactiveScopelets(final BeanSelectionCriteria beanSelectionCriteria, final Collection<? extends Bean<?>> beans) {
+  private static final Bean<?> handleInactiveScopelets(final BeanSelectionCriteria beanSelectionCriteria,
+                                                       final Collection<? extends Bean<?>> beans) {
     if (beans.size() < 2) { // 2 because we're disambiguating
       throw new IllegalArgumentException("beans: " + beans);
     }

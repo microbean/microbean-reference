@@ -66,9 +66,15 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
   public DefaultReferenceSelector(final TypeAndElementSource tes,
                                   final Assignability assignability,
                                   final Collection<? extends Bean<?>> beans) {
-    this(tes, assignability, new DefaultInstanceManager(tes, assignability, beans), BootstrapClientProxier.INSTANCE);
+    this(tes, assignability, new DefaultInstanceManager(tes, assignability, beans));
   }
 
+  public DefaultReferenceSelector(final TypeAndElementSource tes,
+                                  final Assignability assignability,
+                                  final InstanceManager instanceManager) {
+    this(tes, assignability, instanceManager, BootstrapClientProxier.INSTANCE);
+  }
+  
   public DefaultReferenceSelector(final TypeAndElementSource tes,
                                   final Assignability assignability,
                                   final InstanceManager instanceManager,
@@ -160,10 +166,10 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
       // org.microbean.bean.DefaultCreation for example, and DefaultAutoCloseableRegistry.
       c = c.clone();
     }
-    return
-      this.clientProxier.needsClientProxy(beanSelectionCriteria, bean.id(), c, this) ?
-      this.clientProxier.clientProxy(beanSelectionCriteria, bean, c, this, this.instanceManager) :
-      this.instanceManager.instance(beanSelectionCriteria, bean, c, this);
+    if (this.clientProxier.needsClientProxy(beanSelectionCriteria, bean.id(), c, this)) {
+      return this.clientProxier.clientProxy(beanSelectionCriteria, bean, c, this, this.instanceManager);
+    }
+    return this.instanceManager.instance(beanSelectionCriteria, bean, c, this);
   }
 
   @Override // InstanceRemover
