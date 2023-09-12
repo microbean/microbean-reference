@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import java.util.function.Supplier;
 
+import org.microbean.bean.Assignability;
 import org.microbean.bean.Bean;
 import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
@@ -41,6 +42,9 @@ import org.microbean.scope.Scope;
 import static java.lang.invoke.MethodType.methodType;
 
 import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
+import static org.microbean.bean.Qualifiers.defaultQualifiers;
+
+import static org.microbean.lang.Lang.typeAndElementSource;
 
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
@@ -82,8 +86,13 @@ public class DefaultClientProxier implements ClientProxier {
                            final InstanceManager instanceManager) {
     return
       ((Proxy<R>)this.cache.computeIfAbsent(bean.id(),
-                                            x -> this.cpi.instantiate(this.cpcs.clientProxyClass(beanSelectionCriteria, bean, instanceManager),
-                                                                      () -> instanceManager.instance(beanSelectionCriteria, bean, c, r))))
+                                            x -> this.cpi.instantiate(this.cpcs.clientProxyClass(beanSelectionCriteria,
+                                                                                                 bean,
+                                                                                                 instanceManager),
+                                                                      () -> instanceManager.instance(beanSelectionCriteria,
+                                                                                                     bean,
+                                                                                                     c,
+                                                                                                     r))))
       .cast();
   }
 
@@ -94,10 +103,11 @@ public class DefaultClientProxier implements ClientProxier {
 
 
   public static final Bean<DefaultClientProxier> bean(final TypeAndElementSource tes) {
-    return bean(tes, Map.of());
+    return bean(tes, new Assignability(tes), Map.of());
   }
 
   public static final Bean<DefaultClientProxier> bean(final TypeAndElementSource tes,
+                                                      final Assignability assignability,
                                                       final Map<? extends Id, ? extends Proxy<?>> precomputedProxies) {
     return
       new Bean<>(new Id(List.of(tes.declaredType(DefaultClientProxier.class),
@@ -105,16 +115,29 @@ public class DefaultClientProxier implements ClientProxier {
                         anyAndDefaultQualifiers(),
                         SINGLETON_ID),
                  (c, r) -> {
-                   return new DefaultClientProxier(r.<Predicate>reference(new BeanSelectionCriteria(Predicate.class),
-                                                                          null,
-                                                                          cast(c)),
-                                                   precomputedProxies, // defensive copying guaranteed to happen downstream
-                                                   r.<ClientProxyClassSupplier>reference(new BeanSelectionCriteria(ClientProxyClassSupplier.class),
-                                                                                         null,
-                                                                                         cast(c)),
-                                                   r.<ClientProxyInstantiator>reference(new BeanSelectionCriteria(ClientProxyInstantiator.class),
-                                                                                        null,
-                                                                                        cast(c)));
+                   return
+                     new DefaultClientProxier(r.<Predicate>reference(new BeanSelectionCriteria(tes,
+                                                                                               assignability,
+                                                                                               tes.declaredType(Predicate.class),
+                                                                                               defaultQualifiers(),
+                                                                                               true),
+                                                                     null,
+                                                                     cast(c)),
+                                              precomputedProxies, // defensive copying guaranteed to happen downstream
+                                              r.<ClientProxyClassSupplier>reference(new BeanSelectionCriteria(tes,
+                                                                                                              assignability,
+                                                                                                              tes.declaredType(ClientProxyClassSupplier.class),
+                                                                                                              defaultQualifiers(),
+                                                                                                              true),
+                                                                                    null,
+                                                                                    cast(c)),
+                                              r.<ClientProxyInstantiator>reference(new BeanSelectionCriteria(tes,
+                                                                                                             assignability,
+                                                                                                             tes.declaredType(ClientProxyInstantiator.class),
+                                                                                                             defaultQualifiers(),
+                                                                                                             true),
+                                                                                   null,
+                                                                                   cast(c)));
       });
   }
 
@@ -173,8 +196,8 @@ public class DefaultClientProxier implements ClientProxier {
 
   public static interface ClientProxyClassSupplier {
 
-    // You need beanSelectionCriteria and bean because they're what you'll pass to instanceManager to get an instance that your proxy class
-    // will proxy.
+    // You need beanSelectionCriteria and bean because they're what you'll pass to instanceManager to get an instance
+    // that your proxy class will proxy.
     //
     // You don't need References because all a client proxy does is wrap an instance.
     public <R> Class<? extends Proxy<R>> clientProxyClass(final BeanSelectionCriteria beanSelectionCriteria,
@@ -242,7 +265,8 @@ public class DefaultClientProxier implements ClientProxier {
       }
     }
 
-    public static final Bean<GeneratingClientProxyClassSupplier> bean(final TypeAndElementSource tes) {
+    public static final Bean<GeneratingClientProxyClassSupplier> bean(final TypeAndElementSource tes,
+                                                                      final Assignability assignability) {
       return
         new Bean<>(new Id(List.of(tes.declaredType(GeneratingClientProxyClassSupplier.class),
                                   tes.declaredType(ClientProxyClassSupplier.class)),
@@ -250,13 +274,13 @@ public class DefaultClientProxier implements ClientProxier {
                           SINGLETON_ID),
                    (c, r) -> {
                      return
-                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new BeanSelectionCriteria(ClassNamer.class),
+                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClassNamer.class), defaultQualifiers(), true),
                                                                                       null,
                                                                                       cast(c)),
-                                                              r.<ClassLoaderSelector>reference(new BeanSelectionCriteria(ClassLoaderSelector.class),
+                                                              r.<ClassLoaderSelector>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClassLoaderSelector.class), defaultQualifiers(), true),
                                                                                                null,
                                                                                                cast(c)),
-                                                              r.<ClientProxyClassGenerator>reference(new BeanSelectionCriteria(ClientProxyClassGenerator.class),
+                                                              r.<ClientProxyClassGenerator>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClientProxyClassGenerator.class), defaultQualifiers(), true),
                                                                                                      null,
                                                                                                      cast(c)));
         });
@@ -295,9 +319,13 @@ public class DefaultClientProxier implements ClientProxier {
 
     private final TypeAndElementSource tes;
 
-    public DefaultPredicate(final TypeAndElementSource tes) {
+    private final Assignability assignability;
+
+    public DefaultPredicate(final TypeAndElementSource tes,
+                            final Assignability assignability) {
       super();
-      this.tes = Objects.requireNonNull(tes, "tes");
+      this.tes = Objects.requireNonNullElse(tes, typeAndElementSource());
+      this.assignability = Objects.requireNonNullElse(assignability, new Assignability(this.tes));
     }
 
     @Override // Predicate
@@ -306,19 +334,20 @@ public class DefaultClientProxier implements ClientProxier {
                                           final Creation<?> c,
                                           final ReferenceSelector r) {
       final Scope governingScope =
-        r.reference(new BeanSelectionCriteria(this.tes.declaredType(Scope.class), List.of(id.governingScopeId())),
+        r.reference(new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(Scope.class), List.of(id.governingScopeId()), true),
                     null, // bean
                     cast(c));
       return governingScope != null && governingScope.normal();
     }
 
-    public static final Bean<DefaultPredicate> bean(final TypeAndElementSource tes) {
+    public static final Bean<DefaultPredicate> bean(final TypeAndElementSource tes,
+                                                    final Assignability assignability) {
       return
         new Bean<>(new Id(List.of(tes.declaredType(DefaultPredicate.class),
                                   tes.declaredType(Predicate.class)),
                           anyAndDefaultQualifiers(),
                           SINGLETON_ID),
-                   new Singleton<>(new DefaultPredicate(tes)));
+                   new Singleton<>(new DefaultPredicate(tes, assignability)));
     }
 
   }

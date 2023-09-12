@@ -74,7 +74,7 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
                                   final InstanceManager instanceManager) {
     this(tes, assignability, instanceManager, BootstrapClientProxier.INSTANCE);
   }
-  
+
   public DefaultReferenceSelector(final TypeAndElementSource tes,
                                   final Assignability assignability,
                                   final InstanceManager instanceManager,
@@ -85,38 +85,71 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
     this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
 
-    final BeanSelectionCriteria creationSelector =
-      new BeanSelectionCriteria(this.assignability,
-                   this.tes.declaredType(null,
-                                         this.tes.typeElement(Creation.class),
-                                         this.tes.wildcardType(null, null)), // or Object.class?
-                   defaultQualifiers());
-    // Note that BootstrapCreation does not implement AutoCloseableRegistry.
-    this.rootCreation = this.reference(creationSelector, BootstrapCreation.INSTANCE.cast());
+    // Here are the criteria for selecting a Bean that can make Creation<?> instances.
+    final BeanSelectionCriteria creationBeanSelectionCriteria =
+      new BeanSelectionCriteria(this.tes,
+                                this.assignability,
+                                this.tes.declaredType(null,
+                                                      this.tes.typeElement(Creation.class),
+                                                      this.tes.wildcardType(null, null)), // or Object.class?
+                                defaultQualifiers(),
+                                true);
 
-    BeanSelectionCriteria s = new BeanSelectionCriteria(InstanceManager.class);
-    Bean<?> b = this.beanSet().bean(s);
-    if (b != null) {
-      this.instanceManager =
-        Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
-                               "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
-    }
+    // Here is the Bean so selected.
+    final Bean<Creation<?>> creationBean = this.beanSet().bean(creationBeanSelectionCriteria).cast();
 
-    s = new BeanSelectionCriteria(ClientProxier.class);
-    b = this.beanSet().bean(s);
-    if (b != null) {
-      this.clientProxier =
-        Objects.requireNonNull(this.reference(s, b.cast(), this.rootCreation.cast()),
-                               "this.reference(" + s + ", " + b + ", " + this.rootCreation + ")");
-    }
+    // Bootstrapping is tricky. "new BootstrapCreation<>()" below does not accept a BeanSelectionCriteria since the
+    // Creation going "into" a reference selection will be cloned internally by the ReferenceSelector (this class) with
+    // the BeanSelectionCriteria representing the current request. The Creation going "into" the reference selection in
+    // this case represents no reference selection at all (it is the first possible reference selection, so there is
+    // none prior to it).
+    //
+    // This is the most primordial Creation in the entire system. All other Creations notionally descend from
+    // it. However, note that it does not implement AutoCloseableRegistry, so its descendants are not registered as
+    // AutoCloseables with it.  It is like a "dummy root" of an in-actuality multi-rooted tree.
+    final BootstrapCreation<?> bootstrapCreation = new BootstrapCreation<>();
 
-    final Bean<Creation<?>> creationBean = this.beanSet().bean(creationSelector).cast();
+    // The rootCreation field is the first "root" of the multi-rooted Creation<?> tree. In 99.99999% of all cases, it
+    // will end up hosting nothing and effectively doing nothing.  It exists to host any (again, unlikely) dependent
+    // objects sourced while looking up the "real" InstanceManager and the "real" ClientProxier. It is closed/released
+    // only when this DefaultReferenceSelector is closed (see #close()).  Its notional parent is bootstrapCreation.
+    this.rootCreation =
+      Objects.requireNonNull(this.reference(creationBeanSelectionCriteria, creationBean.cast(), bootstrapCreation.cast()),
+                             "this.reference(" + creationBeanSelectionCriteria + ", " + creationBean + ", " + bootstrapCreation + ")");
+    assert this.rootCreation != bootstrapCreation;
+
+    // We have found a reference that corresponds to a "real" Creation<?>-producing Bean. Make it so that our creation()
+    // method will return appropriate references now that we've bootstrapped this foundational part.
     this.creationSupplier = new CreationSupplier() {
         @Override
         public final <I> Creation<I> creation() {
-          return DefaultReferenceSelector.this.reference(creationSelector, creationBean.cast(), rootCreation.cast());
+          return
+            DefaultReferenceSelector.this.reference(creationBeanSelectionCriteria,
+                                                    creationBean.cast(),
+                                                    DefaultReferenceSelector.this.rootCreation.cast());
         }
       };
+
+    // Find the "real" InstanceManager.  Any dependent objects encountered along the way will be registered with the
+    // rootCreation.
+    BeanSelectionCriteria bsc = new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(InstanceManager.class), defaultQualifiers(), true);
+    Bean<?> b = this.beanSet().bean(bsc);
+    if (b != null) {
+      this.instanceManager =
+        Objects.requireNonNull(this.reference(bsc, b.cast(), this.rootCreation.cast()),
+                               "this.reference(" + bsc + ", " + b + ", " + this.rootCreation + ")");
+    }
+
+    // Find the "real" ClientProxier.  Any dependent objects encountered along the way will be registered with the
+    // rootCreation.
+    bsc = new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(ClientProxier.class), defaultQualifiers(), true);
+    b = this.beanSet().bean(bsc);
+    if (b != null) {
+      this.clientProxier =
+        Objects.requireNonNull(this.reference(bsc, b.cast(), this.rootCreation.cast()),
+                               "this.reference(" + bsc + ", " + b + ", " + this.rootCreation + ")");
+    }
+
   }
 
   // No bootstrapping, no validation
@@ -130,7 +163,8 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
     this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
     this.creationSupplier = Objects.requireNonNull(creationSupplier, "creationSupplier");
-    this.rootCreation = BootstrapCreation.INSTANCE;
+    // really a dummy assignment; since no bootstrapping is happening in this constructor this will never be used
+    this.rootCreation = new BootstrapCreation<>();
   }
 
   @Override // ReferenceSelector
@@ -164,7 +198,7 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
     if (c != null) {
       // Critical. Clones c and registers the clone for subsequent closing with its ancestor. See
       // org.microbean.bean.DefaultCreation for example, and DefaultAutoCloseableRegistry.
-      c = c.clone();
+      c = c.clone(beanSelectionCriteria);
     }
     if (this.clientProxier.needsClientProxy(beanSelectionCriteria, bean.id(), c, this)) {
       return this.clientProxier.clientProxy(beanSelectionCriteria, bean, c, this, this.instanceManager);
@@ -215,20 +249,31 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
   // being retrieved.
   private static final class BootstrapCreation<I> implements Creation<I> {
 
-    private static final BootstrapCreation<?> INSTANCE = new BootstrapCreation<>();
+    private final BeanSelectionCriteria beanSelectionCriteria;
 
     private BootstrapCreation() {
+      this(null);
+    }
+
+    private BootstrapCreation(final BeanSelectionCriteria beanSelectionCriteria) {
       super();
+      this.beanSelectionCriteria = beanSelectionCriteria;
+    }
+
+    @Override
+    public final BeanSelectionCriteria beanSelectionCriteria() {
+      return this.beanSelectionCriteria;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public final Creation<I> clone() {
-      try {
-        return (Creation<I>)super.clone();
-      } catch (final CloneNotSupportedException e) {
-        throw new AssertionError(e.getMessage(), e);
-      }
+      return this.clone(this.beanSelectionCriteria());
+    }
+
+    @Override
+    public final Creation<I> clone(final BeanSelectionCriteria beanSelectionCriteria) {
+      return new BootstrapCreation<>(beanSelectionCriteria);
     }
 
     // MUST be idempotent

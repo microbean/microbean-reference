@@ -55,6 +55,7 @@ import static org.microbean.bean.Qualifiers.anyQualifier;
 import static org.microbean.bean.Qualifiers.anyAndDefaultQualifiers;
 import static org.microbean.bean.Qualifiers.defaultQualifiers;
 
+import static org.microbean.lang.Lang.typeAndElementSource;
 import static org.microbean.scope.Scope.NONE_ID;
 import static org.microbean.scope.Scope.SINGLETON_ID;
 
@@ -75,29 +76,29 @@ public final class DefaultInstanceManager implements InstanceManager {
                                 final Assignability assignability,
                                 final Collection<? extends Bean<?>> beans) {
     super();
-    this.assignability = Objects.requireNonNull(assignability, "assignability");
-    this.tes = Objects.requireNonNull(tes, "tes");
-    this.scopeletType = tes.declaredType(null, tes.typeElement(Scopelet.class), tes.wildcardType(null, null));
-    this.anyScopeletSelector = new BeanSelectionCriteria(assignability, this.scopeletType, List.of(anyQualifier()));
+    this.tes = Objects.requireNonNullElse(tes, typeAndElementSource());
+    this.assignability = Objects.requireNonNullElse(assignability, new Assignability(this.tes));
+    this.scopeletType = this.tes.declaredType(null, this.tes.typeElement(Scopelet.class), this.tes.wildcardType(null, null));
+    this.anyScopeletSelector = new BeanSelectionCriteria(this.tes, this.assignability, this.scopeletType, List.of(anyQualifier()), true);
     final Collection<Bean<?>> newBeans = new ArrayList<>(beans.size() + 5);
     newBeans.addAll(beans);
     newBeans.add(new SingletonScopelet().bean());
     newBeans.add(new NoneScopelet().bean());
-    newBeans.add(new Bean<>(new Id(List.of(tes.declaredType(DefaultAutoCloseableRegistry.class),
-                                           tes.declaredType(AutoCloseableRegistry.class)),
+    newBeans.add(new Bean<>(new Id(List.of(this.tes.declaredType(DefaultAutoCloseableRegistry.class),
+                                           this.tes.declaredType(AutoCloseableRegistry.class)),
                                    anyAndDefaultQualifiers(),
                                    NONE_ID),
                             (c, r) -> new DefaultAutoCloseableRegistry()));
-    TypeElement e = tes.typeElement(DefaultCreation.class);
+    TypeElement e = this.tes.typeElement(DefaultCreation.class);
     TypeVariable tv = (TypeVariable)e.getTypeParameters().get(0).asType();
-    final TypeMirror t0 = tes.declaredType(null, e, tv);
-    final TypeMirror t1 = tes.declaredType(null, e);
+    final TypeMirror t0 = this.tes.declaredType(null, e, tv);
+    final TypeMirror t1 = this.tes.declaredType(null, e);
     e = tes.typeElement(Creation.class);
     tv = (TypeVariable)e.getTypeParameters().get(0).asType();
-    final TypeMirror t2 = tes.declaredType(null, e, tv);
-    final TypeMirror t3 = tes.declaredType(null, e);
+    final TypeMirror t2 = this.tes.declaredType(null, e, tv);
+    final TypeMirror t3 = this.tes.declaredType(null, e);
     final BeanSelectionCriteria bsc =
-      new BeanSelectionCriteria(assignability, tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers());
+      new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(AutoCloseableRegistry.class), defaultQualifiers(), true);
     newBeans.add(new Bean<>(new Id(List.of(t0, t1, t2, t3),
                                    anyAndDefaultQualifiers(),
                                    NONE_ID),
@@ -147,7 +148,7 @@ public final class DefaultInstanceManager implements InstanceManager {
     final I singleton = factory.singleton();
     if (singleton == null) {
       final BeanSelectionCriteria scopeletBeanSelectionCriteria =
-        new BeanSelectionCriteria(scopeletType, List.of(bean.id().governingScopeId()));
+        new BeanSelectionCriteria(this.tes, this.assignability, scopeletType, List.of(bean.id().governingScopeId()), true);
       if (bean.equals(this.beanSet.bean(scopeletBeanSelectionCriteria, DefaultInstanceManager::handleInactiveScopelets))) {
         return factory.create(creation, referenceSelector);
       }
@@ -159,7 +160,7 @@ public final class DefaultInstanceManager implements InstanceManager {
   public final boolean remove(final Id id) {
     return
       id != null &&
-      this.<Scopelet<?>>instance(new BeanSelectionCriteria(scopeletType, List.of(id.governingScopeId())),
+      this.<Scopelet<?>>instance(new BeanSelectionCriteria(this.tes, this.assignability, scopeletType, List.of(id.governingScopeId()), true),
                                  null, // Factory
                                  null, // Creation
                                  null) // ReferenceSelector
