@@ -37,8 +37,6 @@ import static org.microbean.lang.Lang.typeAndElementSource;
 
 public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemover {
 
-  private final TypeAndElementSource tes;
-
   private final Assignability assignability;
 
   // Hosts (hopefully non-existent) dependent objects of "real" Instances and "real" ClientProxier. Closed in the
@@ -55,43 +53,36 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
   private ClientProxier clientProxier;
 
   public DefaultReferenceSelector(final Collection<? extends Bean<?>> beans) {
-    this(typeAndElementSource(), beans);
+    this(new Assignability(), beans);
   }
 
-  public DefaultReferenceSelector(final TypeAndElementSource tes,
+  public DefaultReferenceSelector(final Assignability assignability,
                                   final Collection<? extends Bean<?>> beans) {
-    this(tes, new Assignability(tes), beans);
+    this(assignability, new DefaultInstanceManager(assignability, beans));
   }
 
-  public DefaultReferenceSelector(final TypeAndElementSource tes,
-                                  final Assignability assignability,
-                                  final Collection<? extends Bean<?>> beans) {
-    this(tes, assignability, new DefaultInstanceManager(tes, assignability, beans));
+  public DefaultReferenceSelector(final Assignability assignability,
+                                  final InstanceManager bootstrapInstanceManager) {
+    this(assignability, bootstrapInstanceManager, BootstrapClientProxier.INSTANCE);
   }
 
-  public DefaultReferenceSelector(final TypeAndElementSource tes,
-                                  final Assignability assignability,
-                                  final InstanceManager instanceManager) {
-    this(tes, assignability, instanceManager, BootstrapClientProxier.INSTANCE);
-  }
-
-  public DefaultReferenceSelector(final TypeAndElementSource tes,
-                                  final Assignability assignability,
-                                  final InstanceManager instanceManager,
-                                  final ClientProxier clientProxier) {
+  @SuppressWarnings("this-escape")
+  public DefaultReferenceSelector(final Assignability assignability,
+                                  final InstanceManager bootstrapInstanceManager,
+                                  final ClientProxier bootstrapClientProxier) {
     super();
-    this.tes = Objects.requireNonNull(tes, "tes");
-    this.assignability = assignability == null ? new Assignability(tes) : assignability;
-    this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
-    this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
+    this.assignability = assignability == null ? new Assignability() : assignability;
+    this.instanceManager = Objects.requireNonNull(bootstrapInstanceManager, "bootstrapInstanceManager");
+    this.clientProxier = bootstrapClientProxier == null ? BootstrapClientProxier.INSTANCE : bootstrapClientProxier;
+
+    final TypeAndElementSource tes = assignability.typeAndElementSource();
 
     // Here are the criteria for selecting a Bean that can make Creation<?> instances.
     final BeanSelectionCriteria creationBeanSelectionCriteria =
-      new BeanSelectionCriteria(this.tes,
-                                this.assignability,
-                                this.tes.declaredType(null,
-                                                      this.tes.typeElement(Creation.class),
-                                                      this.tes.wildcardType(null, null)), // or Object.class?
+      new BeanSelectionCriteria(this.assignability,
+                                tes.declaredType(null,
+                                                 tes.typeElement(Creation.class),
+                                                 tes.wildcardType(null, null)), // or Object.class?
                                 defaultQualifiers(),
                                 true);
 
@@ -132,7 +123,7 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
 
     // Find the "real" InstanceManager.  Any dependent objects encountered along the way will be registered with the
     // rootCreation.
-    BeanSelectionCriteria bsc = new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(InstanceManager.class), defaultQualifiers(), true);
+    BeanSelectionCriteria bsc = new BeanSelectionCriteria(this.assignability, tes.declaredType(InstanceManager.class), defaultQualifiers(), true);
     Bean<?> b = this.beanSet().bean(bsc);
     if (b != null) {
       this.instanceManager =
@@ -142,7 +133,7 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
 
     // Find the "real" ClientProxier.  Any dependent objects encountered along the way will be registered with the
     // rootCreation.
-    bsc = new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(ClientProxier.class), defaultQualifiers(), true);
+    bsc = new BeanSelectionCriteria(this.assignability, tes.declaredType(ClientProxier.class), defaultQualifiers(), true);
     b = this.beanSet().bean(bsc);
     if (b != null) {
       this.clientProxier =
@@ -153,13 +144,12 @@ public class DefaultReferenceSelector implements ReferenceSelector, InstanceRemo
   }
 
   // No bootstrapping, no validation
-  public DefaultReferenceSelector(final TypeAndElementSource tes,
-                                  final Assignability assignability,
+  public DefaultReferenceSelector(final Assignability assignability,
                                   final InstanceManager instanceManager,
                                   final ClientProxier clientProxier,
                                   final CreationSupplier creationSupplier) {
-    this.tes = Objects.requireNonNull(tes, "tes");
-    this.assignability = assignability == null ? new Assignability(tes) : assignability;
+    this.assignability = assignability == null ? new Assignability() : assignability;
+    final TypeAndElementSource tes = this.assignability.typeAndElementSource();
     this.instanceManager = Objects.requireNonNull(instanceManager, "instanceManager");
     this.clientProxier = clientProxier == null ? BootstrapClientProxier.INSTANCE : clientProxier;
     this.creationSupplier = Objects.requireNonNull(creationSupplier, "creationSupplier");

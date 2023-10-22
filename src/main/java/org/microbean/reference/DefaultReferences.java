@@ -46,12 +46,12 @@ public final class DefaultReferences<R> implements References<R> {
   // @GuardedBy("itself")
   private final IdentityHashMap<R, Id> ids;
 
-  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria,
+  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria, // better be for <R>
                            final DefaultReferenceSelector referenceSelector) {
     this(beanSelectionCriteria, referenceSelector, referenceSelector);
   }
 
-  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria,
+  public DefaultReferences(final BeanSelectionCriteria beanSelectionCriteria, // better be for <R>
                            final ReferenceSelector referenceSelector,
                            final InstanceRemover instanceRemover) {
     super();

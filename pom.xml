@@ -219,12 +219,17 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <compilerArgs>
-              <arg>--enable-preview</arg>
-              <arg>-Xlint:-preview</arg>
               <arg>-Xlint:all</arg>
               <arg>-Xpkginfo:always</arg>
             </compilerArgs>
           </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.ow2.asm</groupId>
+              <artifactId>asm</artifactId>
+              <version>9.5</version> <!-- until maven-compiler-plugin goes to 3.12.0 and does this for us -->
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
@@ -232,7 +237,6 @@
             <additionalOptions>
               <additionalOption>--add-stylesheet</additionalOption>
               <additionalOption>${project.basedir}/src/main/javadoc/css/fonts.css</additionalOption>
-              <additionalOption>--enable-preview</additionalOption>
             </additionalOptions>
             <docfilessubdirs>true</docfilessubdirs>
           </configuration>
@@ -240,7 +244,6 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-            <argLine>--enable-preview</argLine>
             <!-- <argLine>-add-opens=org.microbean.bean/org.microbean.bean=ALL-UNNAMED</argLine> -->
             <!-- See https://junit.org/junit5/docs/snapshot/user-guide/#running-tests-build-maven-config-params -->
             <!-- See https://github.com/apache/maven-surefire/blob/eb48f1b59ca5ccf6954ef33ecab03dbaf93214cd/surefire-providers/surefire-junit-platform/src/main/java/org/apache/maven/surefire/junitplatform/JUnitPlatformProvider.java#L242-L262 -->
@@ -268,9 +271,9 @@
     <jdkToolchainVendor>openjdk</jdkToolchainVendor>
 
     <!-- maven-compiler-plugin properties -->
-    <maven.compiler.release>20</maven.compiler.release>
-    <maven.compiler.source>20</maven.compiler.source>
-    <maven.compiler.target>20</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
 
     <!-- maven-javadoc-plugin properties -->
     <detectJavaApiLink>false</detectJavaApiLink>

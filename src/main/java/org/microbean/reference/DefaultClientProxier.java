@@ -116,23 +116,20 @@ public class DefaultClientProxier implements ClientProxier {
                         SINGLETON_ID),
                  (c, r) -> {
                    return
-                     new DefaultClientProxier(r.<Predicate>reference(new BeanSelectionCriteria(tes,
-                                                                                               assignability,
+                     new DefaultClientProxier(r.<Predicate>reference(new BeanSelectionCriteria(assignability,
                                                                                                tes.declaredType(Predicate.class),
                                                                                                defaultQualifiers(),
                                                                                                true),
                                                                      null,
                                                                      cast(c)),
                                               precomputedProxies, // defensive copying guaranteed to happen downstream
-                                              r.<ClientProxyClassSupplier>reference(new BeanSelectionCriteria(tes,
-                                                                                                              assignability,
+                                              r.<ClientProxyClassSupplier>reference(new BeanSelectionCriteria(assignability,
                                                                                                               tes.declaredType(ClientProxyClassSupplier.class),
                                                                                                               defaultQualifiers(),
                                                                                                               true),
                                                                                     null,
                                                                                     cast(c)),
-                                              r.<ClientProxyInstantiator>reference(new BeanSelectionCriteria(tes,
-                                                                                                             assignability,
+                                              r.<ClientProxyInstantiator>reference(new BeanSelectionCriteria(assignability,
                                                                                                              tes.declaredType(ClientProxyInstantiator.class),
                                                                                                              defaultQualifiers(),
                                                                                                              true),
@@ -274,13 +271,13 @@ public class DefaultClientProxier implements ClientProxier {
                           SINGLETON_ID),
                    (c, r) -> {
                      return
-                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClassNamer.class), defaultQualifiers(), true),
+                       new GeneratingClientProxyClassSupplier(r.<ClassNamer>reference(new BeanSelectionCriteria(assignability, tes.declaredType(ClassNamer.class), defaultQualifiers(), true),
                                                                                       null,
                                                                                       cast(c)),
-                                                              r.<ClassLoaderSelector>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClassLoaderSelector.class), defaultQualifiers(), true),
+                                                              r.<ClassLoaderSelector>reference(new BeanSelectionCriteria(assignability, tes.declaredType(ClassLoaderSelector.class), defaultQualifiers(), true),
                                                                                                null,
                                                                                                cast(c)),
-                                                              r.<ClientProxyClassGenerator>reference(new BeanSelectionCriteria(tes, assignability, tes.declaredType(ClientProxyClassGenerator.class), defaultQualifiers(), true),
+                                                              r.<ClientProxyClassGenerator>reference(new BeanSelectionCriteria(assignability, tes.declaredType(ClientProxyClassGenerator.class), defaultQualifiers(), true),
                                                                                                      null,
                                                                                                      cast(c)));
         });
@@ -334,7 +331,7 @@ public class DefaultClientProxier implements ClientProxier {
                                           final Creation<?> c,
                                           final ReferenceSelector r) {
       final Scope governingScope =
-        r.reference(new BeanSelectionCriteria(this.tes, this.assignability, this.tes.declaredType(Scope.class), List.of(id.governingScopeId()), true),
+        r.reference(new BeanSelectionCriteria(this.assignability, this.tes.declaredType(Scope.class), List.of(id.governingScopeId()), true),
                     null, // bean
                     cast(c));
       return governingScope != null && governingScope.normal();
