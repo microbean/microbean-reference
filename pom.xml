@@ -6,53 +6,157 @@
   <artifactId>microbean-reference</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
-  <parent>
-    <groupId>org.microbean</groupId>
-    <artifactId>microbean-pluginmanagement-pom</artifactId>
-    <version>21</version>
-    <relativePath />
-  </parent>
-
   <name>microBean™ Reference</name>
   <description>microBean™ Reference: Utility classes for working with references.</description>
   <inceptionYear>2023</inceptionYear>
   <url>https://microbean.github.io/microbean-reference</url>
 
+  <organization>
+    <name>microBean™</name>
+    <url>http://microbean.systems/</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <comments>The Apache License, Version 2.0</comments>
+      <distribution>repo</distribution>
+      <name>Apache License 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>ljnelson</id>
+      <name>Laird Nelson</name>
+      <email>ljnelson@gmail.com</email>
+      <url>https://about.me/lairdnelson</url>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+  </developers>
+
   <scm>
-    <connection>scm:git:git@github.com:microbean/microbean-reference.git</connection>
-    <developerConnection>scm:git:git@github.com:microbean/microbean-reference.git</developerConnection>
+    <connection>${scm.url}</connection>
+    <developerConnection>${scm.url}</developerConnection>
     <url>https://github.com/microbean/microbean-reference/</url>
     <tag>HEAD</tag>
   </scm>
 
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/microbean/microbean-reference/issues</url>
+  </issueManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>sonatype-oss-repository-hosting</id>
+      <!-- See https://central.sonatype.org/publish/publish-maven/#distribution-management-and-authentication -->
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <site>
+      <id>Github Pages</id>
+      <name>microBean™ Bean Site</name>
+      <url>https://microbean.github.io/microbean-reference/</url>
+    </site>
+    <snapshotRepository>
+      <id>sonatype-oss-repository-hosting</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <properties>
+
+    <java.util.logging.config.file>${project.basedir}/src/test/java/logging.properties</java.util.logging.config.file>
+
+    <!-- maven-compiler-plugin properties -->
+    <maven.compiler.release>23</maven.compiler.release>
+    <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+    <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+
+    <!-- maven-javadoc-plugin properties -->
+    <bottom><![CDATA[Copyright &copy; ${project.inceptionYear}&ndash;{currentYear}, <a href="${project.organization.url}" target="_top">${project.organization.name}</a>. All rights reserved.]]></bottom>
+    <doctitle>&lt;a href="${project.url}" target="_top"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ${project.artifactId}&lt;/a&gt; ${project.version}</doctitle>
+    <links>https://microbean.github.io/microbean-bean/apidocs/,https://microbean.github.io/microbean-construct/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://microbean.github.io/microbean-scope/apidocs/</links>
+    <sourcetab>2</sourcetab>
+
+    <!-- maven-release-plugin properties -->
+    <!-- See http://central.sonatype.org/pages/apache-maven.html#performing-a-release-deployment-with-the-maven-release-plugin -->
+    <goals>deploy,post-site,scm-publish:publish-scm</goals>
+    <releaseProfiles>deployment</releaseProfiles>
+    <scmCommentPrefix>[maven-release-plugin] [skip ci]</scmCommentPrefix>
+    <tagNameFormat>v@{project.version}</tagNameFormat>
+    <useReleaseProfile>false</useReleaseProfile>
+
+    <!-- maven-scm-publish-plugin properties;
+         see https://maven.apache.org/plugins/maven-scm-publish-plugin/publish-scm-mojo.html -->
+    <scmpublish.content>${project.reporting.outputDirectory}</scmpublish.content>
+    <scmpublish.pubScmUrl>${project.scm.developerConnection}</scmpublish.pubScmUrl>
+    <scmpublish.scm.branch>gh-pages</scmpublish.scm.branch>
+
+    <!-- maven-site-plugin properties -->
+    <maven.site.deploy.skip>true</maven.site.deploy.skip>
+    <relativizeDecorationLinks>false</relativizeDecorationLinks>
+
+    <!-- nexus-staging-maven-plugin properties -->
+    <!-- See https://github.com/sonatype/nexus-maven-plugins/blob/0aee3defb33cb133ff536aba59b11d32a368b1e6/staging/maven-plugin/src/main/java/org/sonatype/nexus/maven/staging/AbstractStagingMojo.java#L169-L175 -->
+    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+    <!-- <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl> -->
+    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+    <stagingProgressTimeoutMinutes>10</stagingProgressTimeoutMinutes>
+
+    <!-- Other properties -->
+    <project.build.sourceEncoding>UTF8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF8</project.reporting.outputEncoding>
+    <scm.url>scm:git:git@github.com:microbean/microbean-reference.git</scm.url>
+
+    <!-- <surefire.useModulePath>false</surefire.useModulePath> -->
+
+  </properties>
+
   <dependencyManagement>
     <dependencies>
 
+      <!-- BOM dependencies. -->
+
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.11.4</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Manages dependencies used only by tests. -->
+      <dependency>
+        <groupId>org.jboss.weld</groupId>
+        <artifactId>weld-core-bom</artifactId>
+        <version>6.0.0.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
       <!-- Normal dependencies. -->
 
       <dependency>
         <groupId>org.microbean</groupId>
+        <artifactId>microbean-attributes</artifactId>
+        <version>0.0.2-SNAPSHOT</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.microbean</groupId>
         <artifactId>microbean-bean</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.0.15-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
-        <artifactId>microbean-lang</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.microbean</groupId>
-        <artifactId>microbean-scopelet</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.microbean</groupId>
-        <artifactId>microbean-qualifier</artifactId>
-        <version>0.2.3</version>
+        <artifactId>microbean-construct</artifactId>
+        <version>0.0.10</version>
       </dependency>
 
     </dependencies>
@@ -60,10 +164,12 @@
 
   <dependencies>
 
-
-    <!-- Compile-scoped dependencies. -->
-
-
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-attributes</artifactId>
+      <scope>compile</scope>
+    </dependency>
+      
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-bean</artifactId>
@@ -72,25 +178,11 @@
 
     <dependency>
       <groupId>org.microbean</groupId>
-      <artifactId>microbean-lang</artifactId>
+      <artifactId>microbean-construct</artifactId>
       <scope>compile</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-qualifier</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-scopelet</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
 
     <!-- Test-scoped dependencies. -->
-
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -109,104 +201,111 @@
   <build>
     <pluginManagement>
       <plugins>
-
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.7.1</version>
+        </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.6.0</version>
           <configuration>
-            <checkstyleRules>
+                        <checkstyleRules>
               <module name="Checker">
                 <module name="BeforeExecutionExclusionFileFilter">
-                  <property name="fileNamePattern" value="module\-info\.java$"/>
+                  <property name="fileNamePattern" value="module\-info\.java$" />
                 </module>
                 <module name="FileTabCharacter">
-                  <property name="eachLine" value="true"/>
+                  <property name="eachLine" value="true" />
                 </module>
-                <module name="JavadocPackage"/>
+                <module name="JavadocPackage" />
                 <module name="LineLength">
-                  <property name="max" value="160"/>
+                  <property name="max" value="160" />
                 </module>
                 <module name="NewlineAtEndOfFile">
-                  <property name="lineSeparator" value="lf"/>
+                  <property name="lineSeparator" value="lf" />
                 </module>
                 <module name="TreeWalker">
                   <module name="AnnotationLocation">
-                    <property name="allowSamelineSingleParameterlessAnnotation" value="false"/>
+                    <property name="allowSamelineSingleParameterlessAnnotation" value="false" />
                   </module>
-                  <module name="AnnotationUseStyle"/>
-                  <module name="ArrayTypeStyle"/>
-                  <module name="AvoidNestedBlocks"/>
-                  <module name="AvoidStarImport"/>
-                  <module name="ClassMemberImpliedModifier"/>
-                  <module name="CommentsIndentation"/>
-                  <module name="DeclarationOrder"/>
-                  <module name="DefaultComesLast"/>
-                  <module name="EmptyBlock"/>
-                  <module name="EmptyCatchBlock"/>
-                  <module name="EmptyStatement"/>
-                  <module name="EqualsHashCode"/>
-                  <module name="ExplicitInitialization"/>
-                  <module name="FinalClass"/>
+                  <module name="AnnotationUseStyle" />
+                  <module name="ArrayTypeStyle" />
+                  <module name="AvoidNestedBlocks" />
+                  <module name="AvoidStarImport" />
+                  <module name="ClassMemberImpliedModifier" />
+                  <module name="CommentsIndentation" />
+                  <module name="DeclarationOrder" />
+                  <module name="DefaultComesLast" />
+                  <module name="EmptyBlock" />
+                  <module name="EmptyCatchBlock" />
+                  <module name="EmptyStatement" />
+                  <module name="EqualsHashCode" />
+                  <module name="ExplicitInitialization" />
+                  <module name="FinalClass" />
                   <module name="FinalLocalVariable">
-                    <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF"/>
+                    <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF" />
                   </module>
-                  <module name="HideUtilityClassConstructor"/>
-                  <module name="InnerAssignment"/>
-                  <module name="InnerTypeLast"/>
-                  <module name="InterfaceIsType"/>
+                  <module name="HideUtilityClassConstructor" />
+                  <module name="InnerAssignment" />
+                  <module name="InnerTypeLast" />
+                  <module name="InterfaceIsType" />
                   <module name="InterfaceMemberImpliedModifier">
-                    <property name="violateImpliedAbstractMethod" value="false"/>
+                    <property name="violateImpliedAbstractMethod" value="false" />
                   </module>
-                  <module name="InvalidJavadocPosition"/>
-                  <module name="JavadocContentLocationCheck"/>
-                  <module name="JavadocMissingWhitespaceAfterAsterisk"/>
-                  <module name="JavadocParagraph"/>
-                  <module name="JavadocStyle"/>
+                  <module name="InvalidJavadocPosition" />
+                  <module name="JavadocContentLocationCheck" />
+                  <module name="JavadocMissingWhitespaceAfterAsterisk" />
+                  <module name="JavadocParagraph" />
+                  <module name="JavadocStyle" />
                   <module name="JavadocVariable">
-                    <property name="scope" value="protected"/>
+                    <property name="scope" value="protected" />
                   </module>
-                  <module name="LeftCurly"/>
-                  <module name="MethodTypeParameterName"/>
-                  <module name="MissingCtor"/>
-                  <module name="MissingDeprecated"/>
-                  <module name="MissingJavadocMethod"/>
-                  <module name="MissingJavadocPackage"/>
+                  <module name="LeftCurly" />
+                  <module name="MethodTypeParameterName" />
+                  <module name="MissingCtor" />
+                  <module name="MissingDeprecated" />
+                  <module name="MissingJavadocMethod" />
+                  <module name="MissingJavadocPackage" />
                   <module name="MissingJavadocType">
-                    <property name="scope" value="protected"/>
+                    <property name="scope" value="protected" />
                   </module>
-                  <module name="MissingOverride"/>
-                  <module name="MultipleVariableDeclarations"/>
-                  <module name="ModifierOrder"/>
-                  <module name="NeedBraces"/>
-                  <module name="NoArrayTrailingComma"/>
-                  <module name="NoFinalizer"/>
-                  <module name="NonEmptyAtclauseDescription"/>
-                  <module name="OneStatementPerLine"/>
-                  <module name="OneTopLevelClass"/>
-                  <module name="OuterTypeFilename"/>
-                  <module name="OverloadMethodsDeclarationOrder"/>
-                  <module name="PackageDeclaration"/>
-                  <module name="RedundantImport"/>
+                  <module name="MissingOverride" />
+                  <module name="MultipleVariableDeclarations" />
+                  <module name="ModifierOrder" />
+                  <module name="NeedBraces" />
+                  <module name="NoArrayTrailingComma" />
+                  <module name="NoFinalizer" />
+                  <module name="NonEmptyAtclauseDescription" />
+                  <module name="OneStatementPerLine" />
+                  <module name="OneTopLevelClass" />
+                  <module name="OuterTypeFilename" />
+                  <module name="OverloadMethodsDeclarationOrder" />
+                  <module name="PackageDeclaration" />
+                  <module name="RedundantImport" />
                   <module name="RegexpSinglelineJava">
-                    <property name="format" value="\s+$"/>
-                    <property name="message" value="File contains trailing whitespace."/>
+                    <property name="format" value="\s+$" />
+                    <property name="message" value="File contains trailing whitespace." />
                   </module>
-                  <module name="RequireEmptyLineBeforeBlockTagGroup"/>
-                  <module name="RequireThis"/>
-                  <module name="RightCurly"/>
-                  <module name="SummaryJavadocCheck"/>
-                  <module name="SuppressWarningsHolder"/>
-                  <module name="UnnecessarySemicolonAfterOuterTypeDeclaration"/>
-                  <module name="UnnecessarySemicolonAfterTypeMemberDeclaration"/>
-                  <module name="UnnecessarySemicolonInEnumeration"/>
-                  <module name="UnnecessarySemicolonInTryWithResources"/>
-                  <module name="UnusedImports"/>
-                  <module name="UnusedLocalVariable"/>
-                  <module name="UpperEll"/>
-                  <module name="VariableDeclarationUsageDistance"/>
+                  <module name="RequireEmptyLineBeforeBlockTagGroup" />
+                  <module name="RequireThis" />
+                  <module name="RightCurly" />
+                  <module name="SummaryJavadocCheck" />
+                  <module name="SuppressWarningsHolder" />
+                  <module name="UnnecessarySemicolonAfterOuterTypeDeclaration" />
+                  <module name="UnnecessarySemicolonAfterTypeMemberDeclaration" />
+                  <module name="UnnecessarySemicolonInEnumeration" />
+                  <module name="UnnecessarySemicolonInTryWithResources" />
+                  <module name="UnusedImports" />
+                  <module name="UnusedLocalVariable" />
+                  <module name="UpperEll" />
+                  <module name="VariableDeclarationUsageDistance" />
                 </module>
-                <property name="charset" value="${project.build.sourceEncoding}"/>
-                <property name="tabWidth" value="2"/>
+                <property name="charset" value="${project.build.sourceEncoding}" />
+                <property name="tabWidth" value="2" />
               </module>
             </checkstyleRules>
             <propertyExpansion>
@@ -214,86 +313,244 @@
               project.build.sourceEncoding=${project.build.sourceEncoding}
             </propertyExpansion>
           </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <configuration>
-            <compilerArgs>
-              <arg>-Xlint:all</arg>
-              <arg>-Xpkginfo:always</arg>
-            </compilerArgs>
-          </configuration>
           <dependencies>
             <dependency>
-              <groupId>org.ow2.asm</groupId>
-              <artifactId>asm</artifactId>
-              <version>9.5</version> <!-- until maven-compiler-plugin goes to 3.12.0 and does this for us -->
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>10.12.6</version>
             </dependency>
           </dependencies>
         </plugin>
         <plugin>
-          <artifactId>maven-javadoc-plugin</artifactId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.4.1</version>
           <configuration>
-            <additionalOptions>
-              <additionalOption>--add-stylesheet</additionalOption>
-              <additionalOption>${project.basedir}/src/main/javadoc/css/fonts.css</additionalOption>
-            </additionalOptions>
-            <docfilessubdirs>true</docfilessubdirs>
+            <filesets>
+              <fileset>
+                <directory>${basedir}</directory>
+                <includes>
+                  <include>src/**/*~</include>
+                  <include>*~</include>
+                </includes>
+              </fileset>
+            </filesets>
           </configuration>
         </plugin>
         <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.14.0</version>
           <configuration>
-            <!-- <argLine>-add-opens=org.microbean.bean/org.microbean.bean=ALL-UNNAMED</argLine> -->
-            <!-- See https://junit.org/junit5/docs/snapshot/user-guide/#running-tests-build-maven-config-params -->
-            <!-- See https://github.com/apache/maven-surefire/blob/eb48f1b59ca5ccf6954ef33ecab03dbaf93214cd/surefire-providers/surefire-junit-platform/src/main/java/org/apache/maven/surefire/junitplatform/JUnitPlatformProvider.java#L242-L262 -->
-            <properties>
-              <configurationParameters>
-                junit.jupiter.execution.parallel.enabled=true
-                junit.jupiter.execution.parallel.mode.default=concurrent
-              </configurationParameters>
-            </properties>
-            <systemPropertyVariables>
-              <java.util.logging.config.file>src/test/java/logging.properties</java.util.logging.config.file>
-              <org.microbean.lang.Lang.verbose>${org.microbean.lang.Lang.verbose}</org.microbean.lang.Lang.verbose>
-              <project.build.directory>${project.build.directory}</project.build.directory>
-              <project.build.testOutputDirectory>${project.build.testOutputDirectory}</project.build.testOutputDirectory>
-            </systemPropertyVariables>
+            <compilerArgs>
+              <arg>-Xlint:all</arg>
+              <arg>-parameters</arg>
+            </compilerArgs>
           </configuration>
         </plugin>
-
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <!-- <version>3.1.0</version> -->
+          <version>3.2.7</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.2</version>
+          <configuration>
+            <docfilessubdirs>true</docfilessubdirs>
+            <tags>
+              <tag>
+                <name>microbean.idempotency</name>
+                <placement>m</placement>
+                <head>Idempotency:</head>
+              </tag>
+              <tag>
+                <name>microbean.nullability</name>
+                <placement>cfm</placement>
+                <head>Nullability:</head>
+              </tag>
+              <tag>
+                <name>microbean.threadsafety</name>
+                <placement>fmpt</placement>
+                <head>Thread Safety:</head>
+              </tag>
+            </tags>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>3.9.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.9.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <!-- <version>3.0.0-M6</version> --> <!-- see https://issues.apache.org/jira/browse/MRELEASE-1038 -->
+          <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-scm-plugin</artifactId>
+          <version>2.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-scm-publish-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.21.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.1</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit-platform</artifactId>
+              <version>3.5.2</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <artifactId>maven-toolchains-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>4.9.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.18.0</version>
+        </plugin>
+        <plugin>
+          <groupId>io.smallrye</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <version>3.2.7</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.13</version>
+          <extensions>true</extensions>
+          <dependencies>
+            <!-- https://issues.sonatype.org/browse/NEXUS-26993?focusedCommentId=1098136&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-1098136 -->
+            <dependency>
+              <groupId>com.thoughtworks.xstream</groupId>
+              <artifactId>xstream</artifactId>
+              <version>1.4.20</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <serverId>sonatype-oss-repository-hosting</serverId>
+            <nexusUrl>${nexusUrl}</nexusUrl>
+            <autoReleaseAfterClose>${autoReleaseAfterClose}</autoReleaseAfterClose>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>23</version>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>3.9.9</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <properties>
+            <!-- See https://junit.org/junit5/docs/snapshot/user-guide/#running-tests-build-maven-config-params -->
+            <configurationParameters>
+              junit.jupiter.execution.parallel.enabled=true
+              junit.jupiter.execution.parallel.mode.default=concurrent
+            </configurationParameters>
+          </properties>
+          <systemPropertyVariables>
+            <java.util.logging.config.file>${java.util.logging.config.file}</java.util.logging.config.file>
+            <project.build.directory>${project.build.directory}</project.build.directory>
+            <project.build.testOutputDirectory>${project.build.testOutputDirectory}</project.build.testOutputDirectory>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+
+      <resource>
+        <targetPath>META-INF</targetPath>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+    </resources>
   </build>
-
-  <properties>
-
-    <jdkToolchainVendor>openjdk</jdkToolchainVendor>
-
-    <!-- maven-compiler-plugin properties -->
-    <maven.compiler.release>21</maven.compiler.release>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
-
-    <!-- maven-javadoc-plugin properties -->
-    <detectJavaApiLink>false</detectJavaApiLink>
-    <links>https://docs.oracle.com/en/java/javase/20/docs/api/</links>
-
-    <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/ -->
-    <goals>deploy,post-site,scm-publish:publish-scm</goals>
-
-    <!-- maven-scm-publish-plugin properties;
-         see https://maven.apache.org/plugins/maven-scm-publish-plugin/publish-scm-mojo.html -->
-    <scmpublish.content>${project.reporting.outputDirectory}</scmpublish.content>
-    <scmpublish.pubScmUrl>${project.scm.developerConnection}</scmpublish.pubScmUrl>
-    <scmpublish.scm.branch>gh-pages</scmpublish.scm.branch>
-
-    <org.microbean.lang.Lang.verbose>false</org.microbean.lang.Lang.verbose>
-
-  </properties>
 
   <reporting>
     <plugins>
+      <!--
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <reportSets>
@@ -304,6 +561,7 @@
           </reportSet>
         </reportSets>
       </plugin>
+      -->
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <reportSets>
@@ -316,5 +574,42 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <profiles>
+    <profile>
+      <id>deployment</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 
 </project>

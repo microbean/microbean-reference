@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2023–2025 microBean™.
+ * Copyright © 2025 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,23 +13,36 @@
  */
 package org.microbean.reference;
 
-import org.microbean.bean.Id;
+import java.util.Objects;
+
+import java.util.function.Supplier;
 
 /**
- * A facility for removing contextual instances from some kind of storage.
+ * A skeletal implementation of the {@link ClientProxy} interface.
+ *
+ * @param <I> the type of contextual instance the implementation proxies
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  */
-@FunctionalInterface
-public interface InstanceRemover {
+public abstract class AbstractClientProxy<I> implements ClientProxy<I> {
+
+  private final Supplier<? extends I> s;
 
   /**
-   * Removes the contextual instance indexed under the supplied {@link Id}.
+   * Creates a new {@link AbstractClientProxy}.
    *
-   * @param id an {@link Id}; may be {@code null} in which case {@code false} will be returned
+   * @param s a {@link Supplier} of contextual instances; must not be {@code null}
    *
-   * @return {@code true} if removal successfully took place; {@code false} otherwise
+   * @exception NullPointerException if {@code s} is {@code null}
    */
-  public boolean remove(final Id id);
+  protected AbstractClientProxy(final Supplier<? extends I> s) {
+    super();
+    this.s = Objects.requireNonNull(s, "s");
+  }
+
+  @Override // ClientProxy<I>
+  public final I $proxied() {
+    return this.s.get(); // yes, each time
+  }
 
 }
