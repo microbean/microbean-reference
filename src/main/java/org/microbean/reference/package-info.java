@@ -13,16 +13,8 @@
  */
 
 /**
- * Provides packages related to implementing references.
+ * Provides classes and interfaces related to implementing <dfn>contextual references</dfn>.
  *
- * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
+ * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  */
-module org.microbean.reference {
-
-  exports org.microbean.reference;
-
-  requires org.microbean.attributes;
-  requires transitive org.microbean.bean;
-  requires transitive org.microbean.construct;
-
-}
+package org.microbean.reference;
