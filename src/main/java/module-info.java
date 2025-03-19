@@ -13,7 +13,7 @@
  */
 
 /**
- * Provides packages related to implementing references.
+ * Provides packages related to implementing <dfn>contextual references</dfn>.
  *
  * @author <a href="https://about.me/lairdnelson" target="_parent">Laird Nelson</a>
  */

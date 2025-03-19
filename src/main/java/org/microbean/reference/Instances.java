@@ -24,7 +24,7 @@ import org.microbean.bean.Request;
  *
  * @see #supplier(Request)
  */
-public interface Instances extends AutoCloseable, InstanceRemover {
+public interface Instances extends AutoCloseable {
 
   @Override // AutoCloseable
   public default void close() {

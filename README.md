@@ -15,7 +15,7 @@ changes, regardless of project version and without notice.**
 
 # Requirements
 
-microBean™ Reference requires a Java runtime of version 23 or higher.
+microBean™ Reference requires a Java runtime of version 21 or higher.
 
 # Installation
 
@@ -27,7 +27,7 @@ Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-reference</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-reference for up-to-date available versions. -->
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 
