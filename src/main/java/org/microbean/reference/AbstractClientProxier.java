@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 import javax.lang.model.element.TypeElement;
 
 import org.microbean.bean.BeanTypeList;
+import org.microbean.bean.Creation;
 import org.microbean.bean.Id;
-import org.microbean.bean.Request;
 
 import org.microbean.construct.Domain;
 
@@ -148,7 +148,7 @@ public abstract class AbstractClientProxier<T> implements ClientProxier {
    *
    * @param <R> the type of the contextual reference
    *
-   * @param r the {@link Request} necessitating this invocation; must not be {@code null}
+   * @param id an {@link Id} qualifying the contextual instance that will be proxied; must not be {@code null}
    *
    * @param instanceSupplier a {@link Supplier} of contextual instances of type {@code R}; must not be {@code null}
    *
@@ -157,7 +157,7 @@ public abstract class AbstractClientProxier<T> implements ClientProxier {
    * @exception NullPointerException if any argument is {@code null}, or if the {@link #instantiate(ProxySpecification,
    * Supplier)} method, invoked as part of the implementation of this method, returns {@code null}
    *
-   * @exception IllegalArgumentException if the supplied {@link Request} is not proxiable for any reason
+   * @exception IllegalArgumentException if the supplied {@link Id} is not proxiable for any reason
    *
    * @exception ReferenceException if the {@link #instantiate(ProxySpecification, Supplier)} method throws a checked
    * {@link Exception}
@@ -169,12 +169,7 @@ public abstract class AbstractClientProxier<T> implements ClientProxier {
   // By the time we get here, proxying is absolutely called for. (If we can't return an R, something went wrong, it's
   // not that the inputs were unsuitable.)
   @Override // ClientProxier
-  public final <R> R clientProxy(final Request<R> r, final Supplier<? extends R> instanceSupplier) {
-    return this.clientProxy(r.beanReduction().bean().id(), instanceSupplier);
-  }
-
-  // Called only by #clientProxy(Request, Supplier).
-  private final <R> R clientProxy(final Id id, final Supplier<? extends R> instanceSupplier) {
+  public final <R> R clientProxy(final Id id, final Supplier<? extends R> instanceSupplier) {
     return this.clientProxy(id.types(), id.attributes(), instanceSupplier);
   }
 
@@ -314,7 +309,7 @@ public abstract class AbstractClientProxier<T> implements ClientProxier {
   }
 
   /**
-   * Called indirectly by the {@link #clientProxy(Request, Supplier)} method when a new {@link ClientProxy
+   * Called indirectly by the {@link #clientProxy(Id, Supplier)} method when a new {@link ClientProxy
    * ClientProxy&lt;R&gt;} instance needs to be created, creates a new instance of a {@link ClientProxy
    * ClientProxy&lt;R&gt;} that proxies contextual instances supplied by the supplied {@code instanceSupplier}, and
    * returns it.

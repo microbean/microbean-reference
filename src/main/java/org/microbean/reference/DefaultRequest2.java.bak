@@ -1,0 +1,204 @@
+/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
+ *
+ * Copyright © 2025 microBean™.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package org.microbean.reference;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+
+import javax.lang.model.type.TypeMirror;
+
+import org.microbean.bean.AmbiguousReductionException;
+import org.microbean.bean.AttributedType;
+import org.microbean.bean.AutoCloseableRegistry;
+import org.microbean.bean.BeanReduction3;
+import org.microbean.bean.BeanSelection3;
+import org.microbean.bean.Bean3;
+import org.microbean.bean.Creation;
+import org.microbean.bean.DefaultAutoCloseableRegistry;
+import org.microbean.bean.Reducible;
+import org.microbean.bean.Creation3;
+import org.microbean.bean.Selectable;
+import org.microbean.bean.UnsatisfiedReductionException;
+
+import org.microbean.construct.Domain;
+
+import static javax.lang.model.type.TypeKind.VOID;
+
+public class DefaultRequest2<I, R> implements AutoCloseableRegistry, Creation3<I> {
+
+  
+  /*
+   * Instance fields.
+   */
+
+
+  private final TypeMirror voidType;
+  
+  private final Selectable<? super AttributedType, Bean3<?>> s;
+    
+  private final Instances2 instances;
+
+  private final AutoCloseableRegistry acr;
+
+  private final BeanReduction3<I> br;
+
+  private final BeanSelection3 bs;
+
+  private final Creation<I> c;
+
+  private final ClientProxier2 cp;
+  
+
+  /*
+   * Constructors.
+   */
+
+  
+  public DefaultRequest2(final Domain domain,
+                         final Selectable<? super AttributedType, Bean3<?>> s,
+                         final Instances2 instances,
+                         final AutoCloseableRegistry acr,
+                         final Creation<I> c,
+                         final ClientProxier2 cp,
+                         final BeanReduction3<I> br, // the bean being made
+                         final BeanSelection3 bs) { // the beans being asked for (type R)
+    this(domain.noType(VOID), s, instances, acr, c, cp, br, bs);
+  }
+
+  private DefaultRequest2(final TypeMirror voidType,
+                          final Selectable<? super AttributedType, Bean3<?>> s,
+                          final Instances2 instances,
+                          final AutoCloseableRegistry acr, // nullable
+                          final Creation<I> c,
+                          final ClientProxier2 cp,
+                          final BeanReduction3<I> br, // the bean being made
+                          final BeanSelection3 bs) { // the beans being asked for (type R)
+    this.voidType = voidType;
+    this.s = Objects.requireNonNull(s, "s");
+    this.instances = Objects.requireNonNull(instances, "instances");
+    this.acr = acr == null ? new DefaultAutoCloseableRegistry() : acr;
+    this.c = c == null ? x -> {} : c;
+    this.cp = Objects.requireNonNull(cp, "cp");
+    this.br = br;
+    this.bs = Objects.requireNonNull(bs, "bs");
+  }
+
+
+  /*
+   * Instance methods
+   */
+
+
+  @Override // AutoCloseableRegistry
+  public void close() {
+    this.acr.close();
+    this.instances.close();
+  }
+
+  @Override // AutoCloseableRegistry
+  public boolean closed() {
+    return this.acr.closed();
+  }
+
+  @Override
+  public final I get() {
+    @SuppressWarnings("unchecked")
+    final DefaultRequest2<I, Void> r = (DefaultRequest2<I, Void>)this;
+    return
+      this.instances.proxiable(this) ?
+      this.cp.clientProxy(r, this.instances.supplier(r)) :
+      this.instances.supplier(r).get();
+  }
+
+  @Override
+  public final <S> Iterable<S> get(final AttributedType t) {
+    // TODO: maybe pass some kind of getEnabled flag to control whether get(), above, throws an IllegalStateException.
+    return
+      new DefaultRequest2<>(this.voidType,
+                            this.s,
+                            this.instances,
+                            this.newChild(), // Is this right? I think we can just pass acr here
+                            this.c,
+                            this.cp,
+                            this.br,
+                            new BeanSelection3(t, this.s.select(t)));
+  }
+
+  @Override // Request2<I, R>
+  public final Iterator<R> iterator() {
+    return new ReferenceIterator();
+  }
+
+  @Override // AutoCloseableRegistry
+  public final AutoCloseableRegistry newChild() {
+    return this.acr.newChild();
+  }
+
+  // Experimental
+  public <S> S ref(final AttributedType t) {
+    final DefaultRequest2<I, S> r = this.get(t);
+    final Iterator<S> i = r.iterator();
+    if (!i.hasNext()) {
+      throw new UnsatisfiedReductionException(t, null, null);
+    }
+    S s = i.next();
+    if (i.hasNext()) {
+      throw new AmbiguousReductionException(t, null, null);
+    }
+    return s;
+  }
+  
+  @Override // AutoCloseableRegistry
+  public final boolean register(final AutoCloseable closeable) {
+    return this.acr.register(closeable);
+  }
+
+  private final class ReferenceIterator implements Iterator<R> {
+
+    private final Iterator<Bean3<?>> i;
+
+    // Deliberately not volatile. We keep it around for removal purposes (not yet implemented).
+    private R ref;
+    
+    private ReferenceIterator() {
+      super();
+      this.i = bs.beans().iterator();
+    }
+
+    @Override // Iterator<R>
+    public final boolean hasNext() {
+      return this.i.hasNext();
+    }
+
+    @Override // Iterator<R>
+    @SuppressWarnings("unchecked")
+    public final R next() {
+      return
+        new DefaultRequest2<R, Void>(voidType,
+                                     s,
+                                     instances,
+                                     newChild(), // I am pretty sure this is critical
+                                     (Creation<R>)c,
+                                     cp,
+                                     new BeanReduction2<>(bs.attributedType(), (Bean2<R>)this.i.next()),
+                                     new BeanSelection2(new AttributedType(voidType, List.of()), List.of()))
+        .get();
+    }
+
+    
+    
+  }
+  
+}

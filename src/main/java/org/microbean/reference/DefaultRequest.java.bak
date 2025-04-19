@@ -196,7 +196,7 @@ public class DefaultRequest<I>
     return child;
   }
 
-  @Override // AutoCloseableRegistry, Instances (AutoCloseable), Request (AutoCloseable)
+  @Override // AutoCloseableRegistry
   public void close() {
     this.acr.close();
     this.instances.close();

@@ -35,14 +35,15 @@ import org.microbean.construct.Domain;
 import static java.lang.reflect.Proxy.newProxyInstance;
 
 /**
- * An {@link AbstractClientProxier} implementation that uses {@link java.lang.reflect.Proxy} machinery.
+ * An {@link AbstractClientProxier} implementation that uses {@link java.lang.reflect.Proxy java.lang.reflect.Proxy}
+ * machinery.
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  */
 public class ReflectiveClientProxier extends AbstractClientProxier<Class<?>> {
 
   private static final Lookup lookup = MethodHandles.publicLookup();
-  
+
   private final Function<? super List<? extends Class<?>>, ? extends ClassLoader> clf;
 
   /**

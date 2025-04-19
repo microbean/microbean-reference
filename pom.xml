@@ -125,7 +125,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.11.4</version>
+        <version>5.12.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -134,7 +134,7 @@
       <dependency>
         <groupId>org.jboss.weld</groupId>
         <artifactId>weld-core-bom</artifactId>
-        <version>6.0.0.Final</version>
+        <version>6.0.2.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -150,7 +150,7 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-bean</artifactId>
-        <version>0.0.16</version>
+        <version>0.0.17</version>
       </dependency>
 
       <dependency>
@@ -185,6 +185,12 @@
     <!-- Test-scoped dependencies. -->
 
     <dependency>
+      <groupId>org.jboss.weld.se</groupId>
+      <artifactId>weld-se-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
@@ -213,7 +219,7 @@
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>3.6.0</version>
           <configuration>
-                        <checkstyleRules>
+            <checkstyleRules>
               <module name="Checker">
                 <module name="BeforeExecutionExclusionFileFilter">
                   <property name="fileNamePattern" value="module\-info\.java$" />
@@ -438,14 +444,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.2</version>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit-platform</artifactId>
-              <version>3.5.2</version>
-            </dependency>
-          </dependencies>
+          <version>3.5.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-toolchains-plugin</artifactId>
@@ -454,7 +453,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>4.9.2.0</version>
+          <version>4.9.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -464,7 +463,7 @@
         <plugin>
           <groupId>io.smallrye</groupId>
           <artifactId>jandex-maven-plugin</artifactId>
-          <version>3.2.7</version>
+          <version>3.3.0</version>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
