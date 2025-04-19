@@ -13,7 +13,7 @@
 <div class="source-container">
 <pre><span class="source-line-no">001</span><span id="line-1">/* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-</span>
 <span class="source-line-no">002</span><span id="line-2"> *</span>
-<span class="source-line-no">003</span><span id="line-3"> * Copyright © 2024–2025 microBean™.</span>
+<span class="source-line-no">003</span><span id="line-3"> * Copyright © 2025 microBean™.</span>
 <span class="source-line-no">004</span><span id="line-4"> *</span>
 <span class="source-line-no">005</span><span id="line-5"> * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with</span>
 <span class="source-line-no">006</span><span id="line-6"> * the License. You may obtain a copy of the License at</span>
@@ -28,45 +28,52 @@
 <span class="source-line-no">015</span><span id="line-15"></span>
 <span class="source-line-no">016</span><span id="line-16">import java.util.function.Supplier;</span>
 <span class="source-line-no">017</span><span id="line-17"></span>
-<span class="source-line-no">018</span><span id="line-18">import org.microbean.bean.Request;</span>
-<span class="source-line-no">019</span><span id="line-19"></span>
-<span class="source-line-no">020</span><span id="line-20">/**</span>
-<span class="source-line-no">021</span><span id="line-21"> * A factory for {@link Supplier}s of contextual instances.</span>
-<span class="source-line-no">022</span><span id="line-22"> *</span>
-<span class="source-line-no">023</span><span id="line-23"> * @author &lt;a href="https://about.me/lairdnelson" target="_top"&gt;Laird Nelson&lt;/a&gt;</span>
+<span class="source-line-no">018</span><span id="line-18">import org.microbean.bean.Bean;</span>
+<span class="source-line-no">019</span><span id="line-19">import org.microbean.bean.Id;</span>
+<span class="source-line-no">020</span><span id="line-20">import org.microbean.bean.Creation;</span>
+<span class="source-line-no">021</span><span id="line-21"></span>
+<span class="source-line-no">022</span><span id="line-22">/**</span>
+<span class="source-line-no">023</span><span id="line-23"> * A factory for {@link Supplier}s of contextual instances.</span>
 <span class="source-line-no">024</span><span id="line-24"> *</span>
-<span class="source-line-no">025</span><span id="line-25"> * @see #supplier(Request)</span>
-<span class="source-line-no">026</span><span id="line-26"> */</span>
-<span class="source-line-no">027</span><span id="line-27">public interface Instances extends AutoCloseable {</span>
-<span class="source-line-no">028</span><span id="line-28"></span>
-<span class="source-line-no">029</span><span id="line-29">  @Override // AutoCloseable</span>
-<span class="source-line-no">030</span><span id="line-30">  public default void close() {</span>
-<span class="source-line-no">031</span><span id="line-31"></span>
-<span class="source-line-no">032</span><span id="line-32">  }</span>
+<span class="source-line-no">025</span><span id="line-25"> * @author &lt;a href="https://about.me/lairdnelson" target="_top"&gt;Laird Nelson&lt;/a&gt;</span>
+<span class="source-line-no">026</span><span id="line-26"> *</span>
+<span class="source-line-no">027</span><span id="line-27"> * @see #supplier(Bean, Creation)</span>
+<span class="source-line-no">028</span><span id="line-28"> */</span>
+<span class="source-line-no">029</span><span id="line-29">public interface Instances extends AutoCloseable {</span>
+<span class="source-line-no">030</span><span id="line-30"></span>
+<span class="source-line-no">031</span><span id="line-31">  @Override // AutoCloseable</span>
+<span class="source-line-no">032</span><span id="line-32">  public default void close() {</span>
 <span class="source-line-no">033</span><span id="line-33"></span>
-<span class="source-line-no">034</span><span id="line-34">  /**</span>
-<span class="source-line-no">035</span><span id="line-35">   * Returns {@code true} if and only if the supplied {@link Request} should result in a contextual reference that is a</span>
-<span class="source-line-no">036</span><span id="line-36">   * &lt;dfn&gt;client proxy&lt;/dfn&gt;.</span>
-<span class="source-line-no">037</span><span id="line-37">   *</span>
-<span class="source-line-no">038</span><span id="line-38">   * @param request a {@link Request}; may be {@code null}</span>
+<span class="source-line-no">034</span><span id="line-34">  }</span>
+<span class="source-line-no">035</span><span id="line-35"></span>
+<span class="source-line-no">036</span><span id="line-36">  /**</span>
+<span class="source-line-no">037</span><span id="line-37">   * Returns {@code true} if and only if it is possible for a client proxy to be created for contextual instances</span>
+<span class="source-line-no">038</span><span id="line-38">   * described by the supplied {@link Id}.</span>
 <span class="source-line-no">039</span><span id="line-39">   *</span>
-<span class="source-line-no">040</span><span id="line-40">   * @return {@code true} if and only if the supplied {@link Request} should result in a contextual reference that is a</span>
-<span class="source-line-no">041</span><span id="line-41">   * &lt;dfn&gt;client proxy&lt;/dfn&gt;</span>
-<span class="source-line-no">042</span><span id="line-42">   */</span>
-<span class="source-line-no">043</span><span id="line-43">  public boolean proxiable(final Request&lt;?&gt; request);</span>
-<span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">  /**</span>
-<span class="source-line-no">046</span><span id="line-46">   * Returns a {@link Supplier} of contextual instances appropriate for the given {@link Request}.</span>
-<span class="source-line-no">047</span><span id="line-47">   *</span>
-<span class="source-line-no">048</span><span id="line-48">   * @param &lt;I&gt; the type of the contextual instance being requested</span>
-<span class="source-line-no">049</span><span id="line-49">   *</span>
-<span class="source-line-no">050</span><span id="line-50">   * @param request a {@link Request}; may be {@code null}</span>
+<span class="source-line-no">040</span><span id="line-40">   * @param id an {@link Id}; must not be {@code null}</span>
+<span class="source-line-no">041</span><span id="line-41">   *</span>
+<span class="source-line-no">042</span><span id="line-42">   * @return {@code true} if and only if it is possible for a client proxy to be created for contextual instances</span>
+<span class="source-line-no">043</span><span id="line-43">   * described by the supplied {@link Id}; {@code false} otherwise</span>
+<span class="source-line-no">044</span><span id="line-44">   *</span>
+<span class="source-line-no">045</span><span id="line-45">   * @exception NullPointerException if {@code id} is {@code null}</span>
+<span class="source-line-no">046</span><span id="line-46">   */</span>
+<span class="source-line-no">047</span><span id="line-47">  public boolean proxiable(final Id id);</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">  /**</span>
+<span class="source-line-no">050</span><span id="line-50">   * Returns a {@link Supplier} of contextual instances appropriate for the given {@link Creation}.</span>
 <span class="source-line-no">051</span><span id="line-51">   *</span>
-<span class="source-line-no">052</span><span id="line-52">   * @return a non-{@code null} {@link Supplier} of contextual instances of the appropriate type</span>
-<span class="source-line-no">053</span><span id="line-53">   */</span>
-<span class="source-line-no">054</span><span id="line-54">  public &lt;I&gt; Supplier&lt;? extends I&gt; supplier(final Request&lt;I&gt; request);</span>
-<span class="source-line-no">055</span><span id="line-55"></span>
-<span class="source-line-no">056</span><span id="line-56">}</span>
+<span class="source-line-no">052</span><span id="line-52">   * @param &lt;I&gt; the type of the contextual instance being requested</span>
+<span class="source-line-no">053</span><span id="line-53">   *</span>
+<span class="source-line-no">054</span><span id="line-54">   * @param bean the {@link Bean} whose {@link Bean#factory() Factory} will create any contextual instances; must not be</span>
+<span class="source-line-no">055</span><span id="line-55">   * {@code null}</span>
+<span class="source-line-no">056</span><span id="line-56">   *</span>
+<span class="source-line-no">057</span><span id="line-57">   * @param creation a {@link Creation}; may be {@code null}</span>
+<span class="source-line-no">058</span><span id="line-58">   *</span>
+<span class="source-line-no">059</span><span id="line-59">   * @return a non-{@code null} {@link Supplier} of contextual instances of the appropriate type</span>
+<span class="source-line-no">060</span><span id="line-60">   */</span>
+<span class="source-line-no">061</span><span id="line-61">  public &lt;I&gt; Supplier&lt;? extends I&gt; supplier(final Bean&lt;I&gt; bean, final Creation&lt;I&gt; creation);</span>
+<span class="source-line-no">062</span><span id="line-62"></span>
+<span class="source-line-no">063</span><span id="line-63">}</span>
 
 
 

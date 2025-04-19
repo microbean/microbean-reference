@@ -48,92 +48,93 @@
 <span class="source-line-no">035</span><span id="line-35">import static java.lang.reflect.Proxy.newProxyInstance;</span>
 <span class="source-line-no">036</span><span id="line-36"></span>
 <span class="source-line-no">037</span><span id="line-37">/**</span>
-<span class="source-line-no">038</span><span id="line-38"> * An {@link AbstractClientProxier} implementation that uses {@link java.lang.reflect.Proxy} machinery.</span>
-<span class="source-line-no">039</span><span id="line-39"> *</span>
-<span class="source-line-no">040</span><span id="line-40"> * @author &lt;a href="https://about.me/lairdnelson" target="_top"&gt;Laird Nelson&lt;/a&gt;</span>
-<span class="source-line-no">041</span><span id="line-41"> */</span>
-<span class="source-line-no">042</span><span id="line-42">public class ReflectiveClientProxier extends AbstractClientProxier&lt;Class&lt;?&gt;&gt; {</span>
-<span class="source-line-no">043</span><span id="line-43"></span>
-<span class="source-line-no">044</span><span id="line-44">  private static final Lookup lookup = MethodHandles.publicLookup();</span>
-<span class="source-line-no">045</span><span id="line-45">  </span>
-<span class="source-line-no">046</span><span id="line-46">  private final Function&lt;? super List&lt;? extends Class&lt;?&gt;&gt;, ? extends ClassLoader&gt; clf;</span>
-<span class="source-line-no">047</span><span id="line-47"></span>
-<span class="source-line-no">048</span><span id="line-48">  /**</span>
-<span class="source-line-no">049</span><span id="line-49">   * Creates a new {@link ReflectiveClientProxier}.</span>
-<span class="source-line-no">050</span><span id="line-50">   *</span>
-<span class="source-line-no">051</span><span id="line-51">   * @param domain a {@link Domain}; must not be {@code null}</span>
-<span class="source-line-no">052</span><span id="line-52">   *</span>
-<span class="source-line-no">053</span><span id="line-53">   * @exception NullPointerException if {@code domain} is {@code null}</span>
-<span class="source-line-no">054</span><span id="line-54">   *</span>
-<span class="source-line-no">055</span><span id="line-55">   * @see #ReflectiveClientProxier(Domain, Function)</span>
-<span class="source-line-no">056</span><span id="line-56">   */</span>
-<span class="source-line-no">057</span><span id="line-57">  public ReflectiveClientProxier(final Domain domain) {</span>
-<span class="source-line-no">058</span><span id="line-58">    this(domain, i -&gt; Thread.currentThread().getContextClassLoader());</span>
-<span class="source-line-no">059</span><span id="line-59">  }</span>
-<span class="source-line-no">060</span><span id="line-60"></span>
-<span class="source-line-no">061</span><span id="line-61">  /**</span>
-<span class="source-line-no">062</span><span id="line-62">   * Creates a new {@link ReflectiveClientProxier}.</span>
-<span class="source-line-no">063</span><span id="line-63">   *</span>
-<span class="source-line-no">064</span><span id="line-64">   * @param domain a {@link Domain}; must not be {@code null}</span>
-<span class="source-line-no">065</span><span id="line-65">   *</span>
-<span class="source-line-no">066</span><span id="line-66">   * @param clf a {@link Function} that returns a {@link ClassLoader} appropriate for a {@link List} of {@link Class}</span>
-<span class="source-line-no">067</span><span id="line-67">   * instances; must not be {@code null}</span>
-<span class="source-line-no">068</span><span id="line-68">   *</span>
-<span class="source-line-no">069</span><span id="line-69">   * @exception NullPointerException if any argument is {@code null}</span>
-<span class="source-line-no">070</span><span id="line-70">   */</span>
-<span class="source-line-no">071</span><span id="line-71">  public ReflectiveClientProxier(final Domain domain,</span>
-<span class="source-line-no">072</span><span id="line-72">                                 final Function&lt;? super List&lt;? extends Class&lt;?&gt;&gt;, ? extends ClassLoader&gt; clf) {</span>
-<span class="source-line-no">073</span><span id="line-73">    super(domain);</span>
-<span class="source-line-no">074</span><span id="line-74">    this.clf = Objects.requireNonNull(clf, "clf");</span>
-<span class="source-line-no">075</span><span id="line-75">  }</span>
-<span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77">  @Override // AbstractClientProxier&lt;Class&lt;?&gt;&gt;</span>
-<span class="source-line-no">078</span><span id="line-78">  @SuppressWarnings("unchecked")</span>
-<span class="source-line-no">079</span><span id="line-79">  protected &lt;R&gt; ClientProxy&lt;R&gt; instantiate(final ProxySpecification ps, final Supplier&lt;? extends R&gt; instanceSupplier) {</span>
-<span class="source-line-no">080</span><span id="line-80">    final Domain domain = this.domain();</span>
-<span class="source-line-no">081</span><span id="line-81">    if (!domain.javaLangObject(ps.superclass())) {</span>
-<span class="source-line-no">082</span><span id="line-82">      throw new IllegalArgumentException("ps: " + ps);</span>
-<span class="source-line-no">083</span><span id="line-83">    }</span>
-<span class="source-line-no">084</span><span id="line-84">    final List&lt;? extends TypeMirror&gt; interfaceTypeMirrors = ps.interfaces();</span>
-<span class="source-line-no">085</span><span id="line-85">    final int size = interfaceTypeMirrors.size();</span>
-<span class="source-line-no">086</span><span id="line-86">    final Class&lt;?&gt;[] interfaces = new Class&lt;?&gt;[size];</span>
-<span class="source-line-no">087</span><span id="line-87">    try {</span>
-<span class="source-line-no">088</span><span id="line-88">      for (int i = 0; i &lt; size; i++) {</span>
-<span class="source-line-no">089</span><span id="line-89">        final TypeElement e = (TypeElement)((DeclaredType)interfaceTypeMirrors.get(i)).asElement();</span>
-<span class="source-line-no">090</span><span id="line-90">        final String binaryName = domain.toString(domain.binaryName(e));</span>
-<span class="source-line-no">091</span><span id="line-91">        interfaces[i] = Class.forName(binaryName, false, this.classLoader(e));</span>
-<span class="source-line-no">092</span><span id="line-92">      }</span>
-<span class="source-line-no">093</span><span id="line-93">    } catch (final ClassNotFoundException cnfe) {</span>
-<span class="source-line-no">094</span><span id="line-94">      throw new IllegalArgumentException("ps: " + ps, cnfe);</span>
-<span class="source-line-no">095</span><span id="line-95">    }</span>
-<span class="source-line-no">096</span><span id="line-96">    return (ClientProxy&lt;R&gt;)newProxyInstance(this.clf.apply(List.of(interfaces)), interfaces, new InvocationHandler() {</span>
-<span class="source-line-no">097</span><span id="line-97">        @Override // InvocationHandler</span>
-<span class="source-line-no">098</span><span id="line-98">        public final Object invoke(final Object p, final Method m, final Object[] a) throws Throwable {</span>
-<span class="source-line-no">099</span><span id="line-99">          return switch (m) {</span>
-<span class="source-line-no">100</span><span id="line-100">          case null -&gt; throw new NullPointerException("m");</span>
-<span class="source-line-no">101</span><span id="line-101">          case Method x when</span>
-<span class="source-line-no">102</span><span id="line-102">            x.getDeclaringClass() == Object.class &amp;&amp;</span>
-<span class="source-line-no">103</span><span id="line-103">            x.getReturnType() == boolean.class &amp;&amp;</span>
-<span class="source-line-no">104</span><span id="line-104">            x.getParameterCount() == 1 &amp;&amp;</span>
-<span class="source-line-no">105</span><span id="line-105">            x.getParameterTypes()[0] == Object.class &amp;&amp;</span>
-<span class="source-line-no">106</span><span id="line-106">            x.getName().equals("equals") -&gt; p == a[0];</span>
-<span class="source-line-no">107</span><span id="line-107">          case Method x when</span>
-<span class="source-line-no">108</span><span id="line-108">            x.getDeclaringClass() == Object.class &amp;&amp;</span>
-<span class="source-line-no">109</span><span id="line-109">            x.getReturnType() == int.class &amp;&amp;</span>
-<span class="source-line-no">110</span><span id="line-110">            x.getParameterCount() == 0 &amp;&amp;</span>
-<span class="source-line-no">111</span><span id="line-111">            x.getName().equals("hashCode") -&gt; System.identityHashCode(p);</span>
-<span class="source-line-no">112</span><span id="line-112">          default -&gt; m.invoke(instanceSupplier.get(), a);</span>
-<span class="source-line-no">113</span><span id="line-113">          };</span>
-<span class="source-line-no">114</span><span id="line-114">        }</span>
-<span class="source-line-no">115</span><span id="line-115">      });</span>
-<span class="source-line-no">116</span><span id="line-116">  }</span>
-<span class="source-line-no">117</span><span id="line-117"></span>
-<span class="source-line-no">118</span><span id="line-118">  @Override // AbstractClientProxier&lt;Void&gt;</span>
-<span class="source-line-no">119</span><span id="line-119">  protected Lookup lookup(final Class&lt;?&gt; c) {</span>
-<span class="source-line-no">120</span><span id="line-120">    return lookup;</span>
-<span class="source-line-no">121</span><span id="line-121">  }</span>
-<span class="source-line-no">122</span><span id="line-122"></span>
-<span class="source-line-no">123</span><span id="line-123">}</span>
+<span class="source-line-no">038</span><span id="line-38"> * An {@link AbstractClientProxier} implementation that uses {@link java.lang.reflect.Proxy java.lang.reflect.Proxy}</span>
+<span class="source-line-no">039</span><span id="line-39"> * machinery.</span>
+<span class="source-line-no">040</span><span id="line-40"> *</span>
+<span class="source-line-no">041</span><span id="line-41"> * @author &lt;a href="https://about.me/lairdnelson" target="_top"&gt;Laird Nelson&lt;/a&gt;</span>
+<span class="source-line-no">042</span><span id="line-42"> */</span>
+<span class="source-line-no">043</span><span id="line-43">public class ReflectiveClientProxier extends AbstractClientProxier&lt;Class&lt;?&gt;&gt; {</span>
+<span class="source-line-no">044</span><span id="line-44"></span>
+<span class="source-line-no">045</span><span id="line-45">  private static final Lookup lookup = MethodHandles.publicLookup();</span>
+<span class="source-line-no">046</span><span id="line-46"></span>
+<span class="source-line-no">047</span><span id="line-47">  private final Function&lt;? super List&lt;? extends Class&lt;?&gt;&gt;, ? extends ClassLoader&gt; clf;</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">  /**</span>
+<span class="source-line-no">050</span><span id="line-50">   * Creates a new {@link ReflectiveClientProxier}.</span>
+<span class="source-line-no">051</span><span id="line-51">   *</span>
+<span class="source-line-no">052</span><span id="line-52">   * @param domain a {@link Domain}; must not be {@code null}</span>
+<span class="source-line-no">053</span><span id="line-53">   *</span>
+<span class="source-line-no">054</span><span id="line-54">   * @exception NullPointerException if {@code domain} is {@code null}</span>
+<span class="source-line-no">055</span><span id="line-55">   *</span>
+<span class="source-line-no">056</span><span id="line-56">   * @see #ReflectiveClientProxier(Domain, Function)</span>
+<span class="source-line-no">057</span><span id="line-57">   */</span>
+<span class="source-line-no">058</span><span id="line-58">  public ReflectiveClientProxier(final Domain domain) {</span>
+<span class="source-line-no">059</span><span id="line-59">    this(domain, i -&gt; Thread.currentThread().getContextClassLoader());</span>
+<span class="source-line-no">060</span><span id="line-60">  }</span>
+<span class="source-line-no">061</span><span id="line-61"></span>
+<span class="source-line-no">062</span><span id="line-62">  /**</span>
+<span class="source-line-no">063</span><span id="line-63">   * Creates a new {@link ReflectiveClientProxier}.</span>
+<span class="source-line-no">064</span><span id="line-64">   *</span>
+<span class="source-line-no">065</span><span id="line-65">   * @param domain a {@link Domain}; must not be {@code null}</span>
+<span class="source-line-no">066</span><span id="line-66">   *</span>
+<span class="source-line-no">067</span><span id="line-67">   * @param clf a {@link Function} that returns a {@link ClassLoader} appropriate for a {@link List} of {@link Class}</span>
+<span class="source-line-no">068</span><span id="line-68">   * instances; must not be {@code null}</span>
+<span class="source-line-no">069</span><span id="line-69">   *</span>
+<span class="source-line-no">070</span><span id="line-70">   * @exception NullPointerException if any argument is {@code null}</span>
+<span class="source-line-no">071</span><span id="line-71">   */</span>
+<span class="source-line-no">072</span><span id="line-72">  public ReflectiveClientProxier(final Domain domain,</span>
+<span class="source-line-no">073</span><span id="line-73">                                 final Function&lt;? super List&lt;? extends Class&lt;?&gt;&gt;, ? extends ClassLoader&gt; clf) {</span>
+<span class="source-line-no">074</span><span id="line-74">    super(domain);</span>
+<span class="source-line-no">075</span><span id="line-75">    this.clf = Objects.requireNonNull(clf, "clf");</span>
+<span class="source-line-no">076</span><span id="line-76">  }</span>
+<span class="source-line-no">077</span><span id="line-77"></span>
+<span class="source-line-no">078</span><span id="line-78">  @Override // AbstractClientProxier&lt;Class&lt;?&gt;&gt;</span>
+<span class="source-line-no">079</span><span id="line-79">  @SuppressWarnings("unchecked")</span>
+<span class="source-line-no">080</span><span id="line-80">  protected &lt;R&gt; ClientProxy&lt;R&gt; instantiate(final ProxySpecification ps, final Supplier&lt;? extends R&gt; instanceSupplier) {</span>
+<span class="source-line-no">081</span><span id="line-81">    final Domain domain = this.domain();</span>
+<span class="source-line-no">082</span><span id="line-82">    if (!domain.javaLangObject(ps.superclass())) {</span>
+<span class="source-line-no">083</span><span id="line-83">      throw new IllegalArgumentException("ps: " + ps);</span>
+<span class="source-line-no">084</span><span id="line-84">    }</span>
+<span class="source-line-no">085</span><span id="line-85">    final List&lt;? extends TypeMirror&gt; interfaceTypeMirrors = ps.interfaces();</span>
+<span class="source-line-no">086</span><span id="line-86">    final int size = interfaceTypeMirrors.size();</span>
+<span class="source-line-no">087</span><span id="line-87">    final Class&lt;?&gt;[] interfaces = new Class&lt;?&gt;[size];</span>
+<span class="source-line-no">088</span><span id="line-88">    try {</span>
+<span class="source-line-no">089</span><span id="line-89">      for (int i = 0; i &lt; size; i++) {</span>
+<span class="source-line-no">090</span><span id="line-90">        final TypeElement e = (TypeElement)((DeclaredType)interfaceTypeMirrors.get(i)).asElement();</span>
+<span class="source-line-no">091</span><span id="line-91">        final String binaryName = domain.toString(domain.binaryName(e));</span>
+<span class="source-line-no">092</span><span id="line-92">        interfaces[i] = Class.forName(binaryName, false, this.classLoader(e));</span>
+<span class="source-line-no">093</span><span id="line-93">      }</span>
+<span class="source-line-no">094</span><span id="line-94">    } catch (final ClassNotFoundException cnfe) {</span>
+<span class="source-line-no">095</span><span id="line-95">      throw new IllegalArgumentException("ps: " + ps, cnfe);</span>
+<span class="source-line-no">096</span><span id="line-96">    }</span>
+<span class="source-line-no">097</span><span id="line-97">    return (ClientProxy&lt;R&gt;)newProxyInstance(this.clf.apply(List.of(interfaces)), interfaces, new InvocationHandler() {</span>
+<span class="source-line-no">098</span><span id="line-98">        @Override // InvocationHandler</span>
+<span class="source-line-no">099</span><span id="line-99">        public final Object invoke(final Object p, final Method m, final Object[] a) throws Throwable {</span>
+<span class="source-line-no">100</span><span id="line-100">          return switch (m) {</span>
+<span class="source-line-no">101</span><span id="line-101">          case null -&gt; throw new NullPointerException("m");</span>
+<span class="source-line-no">102</span><span id="line-102">          case Method x when</span>
+<span class="source-line-no">103</span><span id="line-103">            x.getDeclaringClass() == Object.class &amp;&amp;</span>
+<span class="source-line-no">104</span><span id="line-104">            x.getReturnType() == boolean.class &amp;&amp;</span>
+<span class="source-line-no">105</span><span id="line-105">            x.getParameterCount() == 1 &amp;&amp;</span>
+<span class="source-line-no">106</span><span id="line-106">            x.getParameterTypes()[0] == Object.class &amp;&amp;</span>
+<span class="source-line-no">107</span><span id="line-107">            x.getName().equals("equals") -&gt; p == a[0];</span>
+<span class="source-line-no">108</span><span id="line-108">          case Method x when</span>
+<span class="source-line-no">109</span><span id="line-109">            x.getDeclaringClass() == Object.class &amp;&amp;</span>
+<span class="source-line-no">110</span><span id="line-110">            x.getReturnType() == int.class &amp;&amp;</span>
+<span class="source-line-no">111</span><span id="line-111">            x.getParameterCount() == 0 &amp;&amp;</span>
+<span class="source-line-no">112</span><span id="line-112">            x.getName().equals("hashCode") -&gt; System.identityHashCode(p);</span>
+<span class="source-line-no">113</span><span id="line-113">          default -&gt; m.invoke(instanceSupplier.get(), a);</span>
+<span class="source-line-no">114</span><span id="line-114">          };</span>
+<span class="source-line-no">115</span><span id="line-115">        }</span>
+<span class="source-line-no">116</span><span id="line-116">      });</span>
+<span class="source-line-no">117</span><span id="line-117">  }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">  @Override // AbstractClientProxier&lt;Void&gt;</span>
+<span class="source-line-no">120</span><span id="line-120">  protected Lookup lookup(final Class&lt;?&gt; c) {</span>
+<span class="source-line-no">121</span><span id="line-121">    return lookup;</span>
+<span class="source-line-no">122</span><span id="line-122">  }</span>
+<span class="source-line-no">123</span><span id="line-123"></span>
+<span class="source-line-no">124</span><span id="line-124">}</span>
 
 
 
