@@ -15,14 +15,12 @@ package org.microbean.reference;
 
 import java.util.function.Supplier;
 
-import org.microbean.bean.Id;
-
 /**
- * A source of {@link ClientProxy} instances.
+ * A supplier of {@link ClientProxy} instances.
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  *
- * @see #clientProxy(Id, Supplier)
+ * @see #clientProxy(Request, Supplier)
  */
 @FunctionalInterface
 public interface ClientProxier {
@@ -35,7 +33,7 @@ public interface ClientProxier {
    *
    * @param <R> the type of the contextual reference
    *
-   * @param id an {@link Id} qualifying the contextual instance that will be proxied; must not be {@code null}
+   * @param r the {@link Request} necessitating this invocation; must not be {@code null}
    *
    * @param instanceSupplier a {@link Supplier} of contextual instances of the appropriate type; must not be {@code null}
    *
@@ -45,6 +43,6 @@ public interface ClientProxier {
    *
    * @see ClientProxy
    */
-  public <R> R clientProxy(final Id id, final Supplier<? extends R> instanceSupplier);
+  public <R> R clientProxy(final Request<R> r, final Supplier<? extends R> instanceSupplier);
 
 }

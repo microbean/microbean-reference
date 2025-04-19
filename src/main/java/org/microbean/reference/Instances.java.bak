@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2025 microBean™.
+ * Copyright © 2024–2025 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,16 +15,14 @@ package org.microbean.reference;
 
 import java.util.function.Supplier;
 
-import org.microbean.bean.Bean;
-import org.microbean.bean.Id;
-import org.microbean.bean.Creation;
+import org.microbean.bean.Request;
 
 /**
  * A factory for {@link Supplier}s of contextual instances.
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  *
- * @see #supplier(Bean, Creation)
+ * @see #supplier(Request)
  */
 public interface Instances extends AutoCloseable {
 
@@ -34,30 +32,25 @@ public interface Instances extends AutoCloseable {
   }
 
   /**
-   * Returns {@code true} if and only if it is possible for a client proxy to be created for contextual instances
-   * described by the supplied {@link Id}.
+   * Returns {@code true} if and only if the supplied {@link Request} should result in a contextual reference that is a
+   * <dfn>client proxy</dfn>.
    *
-   * @param id an {@link Id}; must not be {@code null}
+   * @param request a {@link Request}; may be {@code null}
    *
-   * @return {@code true} if and only if it is possible for a client proxy to be created for contextual instances
-   * described by the supplied {@link Id}; {@code false} otherwise
-   *
-   * @exception NullPointerException if {@code id} is {@code null}
+   * @return {@code true} if and only if the supplied {@link Request} should result in a contextual reference that is a
+   * <dfn>client proxy</dfn>
    */
-  public boolean proxiable(final Id id);
+  public boolean proxiable(final Request<?> request);
 
   /**
-   * Returns a {@link Supplier} of contextual instances appropriate for the given {@link Creation}.
+   * Returns a {@link Supplier} of contextual instances appropriate for the given {@link Request}.
    *
    * @param <I> the type of the contextual instance being requested
    *
-   * @param bean the {@link Bean} whose {@link Bean#factory() Factory} will create any contextual instances; must not be
-   * {@code null}
-   *
-   * @param creation a {@link Creation}; may be {@code null}
+   * @param request a {@link Request}; may be {@code null}
    *
    * @return a non-{@code null} {@link Supplier} of contextual instances of the appropriate type
    */
-  public <I> Supplier<? extends I> supplier(final Bean<I> bean, final Creation<I> creation);
+  public <I> Supplier<? extends I> supplier(final Request<I> request);
 
 }
