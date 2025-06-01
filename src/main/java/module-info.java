@@ -24,5 +24,6 @@ module org.microbean.reference {
   requires org.microbean.attributes;
   requires transitive org.microbean.bean;
   requires transitive org.microbean.construct;
+  requires transitive org.microbean.proxy;
 
 }

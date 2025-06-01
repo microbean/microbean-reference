@@ -80,7 +80,7 @@
     <!-- maven-javadoc-plugin properties -->
     <bottom><![CDATA[Copyright &copy; ${project.inceptionYear}&ndash;{currentYear}, <a href="${project.organization.url}" target="_top">${project.organization.name}</a>. All rights reserved.]]></bottom>
     <doctitle>&lt;a href="${project.url}" target="_top"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ${project.artifactId}&lt;/a&gt; ${project.version}</doctitle>
-    <links>https://microbean.github.io/microbean-attributes/apidocs/,https://microbean.github.io/microbean-bean/apidocs/,https://microbean.github.io/microbean-construct/apidocs/</links>
+    <links>https://microbean.github.io/microbean-attributes/apidocs/,https://microbean.github.io/microbean-bean/apidocs/,https://microbean.github.io/microbean-construct/apidocs/,https://microbean.github.io/microbean-proxy/apidocs/</links>
     <sourcetab>2</sourcetab>
 
     <!-- maven-release-plugin properties -->
@@ -125,7 +125,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.12.2</version>
+        <version>5.13.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -134,7 +134,7 @@
       <dependency>
         <groupId>org.jboss.weld</groupId>
         <artifactId>weld-core-bom</artifactId>
-        <version>6.0.2.Final</version>
+        <version>6.0.3.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -150,13 +150,19 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-bean</artifactId>
-        <version>0.0.17</version>
+        <version>0.0.18</version>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-construct</artifactId>
         <version>0.0.10</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-proxy</artifactId>
+        <version>0.0.2</version>
       </dependency>
 
     </dependencies>
@@ -179,6 +185,12 @@
     <dependency>
       <groupId>org.microbean</groupId>
       <artifactId>microbean-construct</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-proxy</artifactId>
       <scope>compile</scope>
     </dependency>
 
@@ -329,7 +341,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
           <configuration>
             <filesets>
               <fileset>
@@ -463,7 +475,7 @@
         <plugin>
           <groupId>io.smallrye</groupId>
           <artifactId>jandex-maven-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.3.1</version>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>

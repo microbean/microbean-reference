@@ -17,8 +17,10 @@ import java.util.function.Supplier;
 
 import org.microbean.bean.Id;
 
+import org.microbean.proxy.Proxy;
+
 /**
- * A source of {@link ClientProxy} instances.
+ * A source of {@link Proxy} instances representing <dfn>client proxies</dfn>.
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  *
@@ -28,8 +30,8 @@ import org.microbean.bean.Id;
 public interface ClientProxier {
 
   /**
-   * Returns a <dfn>contextual reference</dfn> which is also a {@link ClientProxy}, given a
-   * {@link Supplier} of <dfn>contextual instances</dfn> of the appropriate type.
+   * Returns a <dfn>contextual reference</dfn> which is also a {@link Proxy}, given a {@link Supplier} of
+   * <dfn>contextual instances</dfn> of the appropriate type.
    *
    * <p>Implementations of this method may return {@code null}.</p>
    *
@@ -43,7 +45,7 @@ public interface ClientProxier {
    *
    * @exception NullPointerException if any argument is {@code null}
    *
-   * @see ClientProxy
+   * @see Proxy
    */
   public <R> R clientProxy(final Id id, final Supplier<? extends R> instanceSupplier);
 
