@@ -15,6 +15,7 @@ package org.microbean.reference;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import javax.lang.model.type.TypeMirror;
@@ -23,7 +24,7 @@ import org.microbean.bean.AmbiguousReductionException;
 import org.microbean.bean.AttributedType;
 import org.microbean.bean.AutoCloseableRegistry;
 import org.microbean.bean.Bean;
-import org.microbean.bean.BeanReduction;
+import org.microbean.bean.BeanException;
 import org.microbean.bean.Creation;
 import org.microbean.bean.DefaultAutoCloseableRegistry;
 import org.microbean.bean.Destruction;
@@ -36,8 +37,6 @@ import org.microbean.bean.Selectable;
 import org.microbean.bean.UnsatisfiedReductionException;
 
 import org.microbean.construct.Domain;
-
-import static javax.lang.model.type.TypeKind.VOID;
 
 /**
  * A central object representing a request for dependencies that is a {@link Creation} (and therefore also a {@link
@@ -61,15 +60,13 @@ import static javax.lang.model.type.TypeKind.VOID;
  *
  * @see Factory#destroy(Object, Destruction)
  */
-public class Request<I, R> implements Creation<I>, Destruction, References<R> {
+public final class Request<I, R> implements Creation<I>, Destruction, References<R> {
 
 
   /*
    * Instance fields.
    */
 
-
-  private final AttributedType voidType;
 
   private final Selectable<? super AttributedType, Bean<?>> s;
 
@@ -79,7 +76,7 @@ public class Request<I, R> implements Creation<I>, Destruction, References<R> {
 
   private final ClientProxier cp;
 
-  private final BeanReduction<I> br;
+  private final Bean<I> b;
 
   private final AttributedType rType;
 
@@ -92,9 +89,9 @@ public class Request<I, R> implements Creation<I>, Destruction, References<R> {
   /**
    * Creates a new {@link Request}.
    *
-   * @param domain a {@link Domain}; must not be {@code null}
-   *
-   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AttributedType}; must not be {@code null}
+   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AttributedType}; must not be {@code
+   * null}; must be safe for concurrent use by multiple threads; often assembled out of methods present in the {@link
+   * org.microbean.bean.Selectables} and {@link org.microbean.bean.Beans} classes, among other such utility classes
    *
    * @param instances an {@link Instances} responsible for using a {@link Bean} to acquire an appropriate {@link
    * java.util.function.Supplier} of contextual instances; must not be {@code null}
@@ -104,51 +101,27 @@ public class Request<I, R> implements Creation<I>, Destruction, References<R> {
    *
    * @param cp a {@link ClientProxier}; must not be {@code null}
    *
-   * @param br a {@link BeanReduction} describing the request in progress; may be {@code null} in certain rare
-   * primordial cases
-   *
-   * @exception NullPointerException if {@code domain}, {@code s}, {@code instances}, or {@code cp} is {@code null}
+   * @exception NullPointerException if {@code s}, {@code instances}, or {@code cp} is {@code null}
    */
-  public Request(final Domain domain,
-                 final Selectable<? super AttributedType, Bean<?>> s,
+  public Request(final Selectable<? super AttributedType, Bean<?>> s,
                  final Instances instances,
                  final AutoCloseableRegistry acr,
-                 final ClientProxier cp,
-                 final BeanReduction<I> br) {
-    this(new AttributedType(domain.noType(VOID)),
-         s,
-         instances,
-         acr,
-         cp,
-         br);
+                 final ClientProxier cp) {
+    this(s, instances, acr, cp, null, null);
   }
 
-  private Request(final AttributedType voidType,
-                  final Selectable<? super AttributedType, Bean<?>> s,
-                  final Instances instances,
-                  final AutoCloseableRegistry acr,
-                  final ClientProxier cp,
-                  final BeanReduction<I> br) {
-    this(voidType, s, instances, acr, cp, br, voidType);
-  }
-
-  private Request(final AttributedType voidType,
-                  final Selectable<? super AttributedType, Bean<?>> s,
+  private Request(final Selectable<? super AttributedType, Bean<?>> s,
                   final Instances instances,
                   final AutoCloseableRegistry acr, // nullable
                   final ClientProxier cp,
-                  final BeanReduction<I> br, // the bean being made
-                  final AttributedType rType) { // the type of the references returned
-    if (voidType.type().getKind() != VOID) {
-      throw new IllegalArgumentException("voidType");
-    }
-    this.voidType = voidType;
+                  final Bean<I> b,
+                  final AttributedType rType) { // the type of the references returned; nullable
     this.s = Objects.requireNonNull(s, "s");
     this.instances = Objects.requireNonNull(instances, "instances");
-    this.rType = Objects.requireNonNull(rType, "rType");
     this.cp = Objects.requireNonNull(cp, "cp");
     this.acr = acr == null ? new DefaultAutoCloseableRegistry() : acr;
-    this.br = br;
+    this.b = b;
+    this.rType = rType;
   }
 
 
@@ -158,42 +131,47 @@ public class Request<I, R> implements Creation<I>, Destruction, References<R> {
 
 
   @Override // Destruction
-  public void close() {
-    this.acr.close();
-    this.instances.close();
+  public final void close() {
+    try (this.instances; this.acr) {}
   }
 
-  @Override
-  public Iterator<R> iterator() {
+  @Override // Creation<I>
+  public final Id id() {
+    return this.b == null ? null : this.b.id();
+  }
+
+  @Override // References<R> (Iterable<R>)
+  public final Iterator<R> iterator() {
     return new ReferencesIterator();
   }
 
   // Called by ReferencesIterator below
   private final R get(final Request<R, Void> r) {
-    final Bean<R> bean = r.br.bean();
+    final Bean<R> bean = r.b;
     final Id id = bean.id();
     if (this.instances.proxiable(id)) {
-      // TODO: this means destroyable
-      this.cp.clientProxy(id, instances.supplier(bean, r));
+      final R ref = this.cp.clientProxy(id, instances.supplier(bean, r));
+      // TODO: we know that ref can be destroyed because it's from a normal scope, i.e. it is not itself a contextual
+      // instance, so save it in a collection somewhere so it can be destroyed via the #destroy(R) method (see CDI's
+      // Instances#destroy(Object))
+      return ref;
     }
-    // TODO: ask instances if r is destroyable and save it off
+    // TODO: ask instances if ref is destroyable and save it off
     return instances.supplier(bean, r).get();
   }
 
   @Override // ReferencesSelector
-  public <R> References<R> references(final AttributedType t) {
-    return
-      new Request<>(this.voidType,
-                    this.s,
-                    this.instances,
-                    this.acr, // no newChild() call yet
-                    this.cp,
-                    this.br, // we're not changing the bean being made
-                    t);
+  public final <R> References<R> references(final AttributedType t) {
+    return new Request<>(this.s, this.instances, this.acr, this.cp, this.b, t);
   }
 
   @Override // References<R>
-  public boolean destroy(final R r) {
+  public final int size() {
+    return this.s.select(this.rType).size();
+  }
+
+  @Override // References<R>
+  public final boolean destroy(final R r) {
     if (r != null) { // and is in dependent scope; we'll deal with that later
       // TODO: remove it from a collection of dependent refs returned by get(Request) above
     }
@@ -208,31 +186,37 @@ public class Request<I, R> implements Creation<I>, Destruction, References<R> {
 
   private final class ReferencesIterator implements Iterator<R> {
 
-    private final Iterator<Bean<?>> i;
+    private Iterator<Bean<?>> i;
 
     private R ref;
 
     private ReferencesIterator() {
       super();
-      this.i = s.select(rType).iterator();
     }
 
     @Override // Iterator<R>
     public final boolean hasNext() {
+      if (rType == null) {
+        return false;
+      }
+      if (this.i == null) {
+        this.i = s.select(rType).iterator();
+      }
       return this.i.hasNext();
     }
 
     @Override // Iterator<R>
-    @SuppressWarnings("unchecked")
     public final R next() {
-      return
-        this.ref = get(new Request<>(voidType,
-                                     s,
-                                     instances,
-                                     acr.newChild(), // critical
-                                     cp,
-                                     new BeanReduction<>(rType, (Bean<R>)this.i.next()),
-                                     voidType));
+      if (rType == null) {
+        throw new NoSuchElementException();
+      }
+      if (this.i == null) {
+        this.i = s.select(rType).iterator();
+      }
+      @SuppressWarnings("unchecked")
+      final R ref = get(new Request<>(s, instances, acr.newChild(), cp, (Bean<R>)this.i.next(), null));
+      this.ref = ref;
+      return ref;
     }
 
     @Override // Iterator<R>

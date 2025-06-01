@@ -13,14 +13,16 @@
  */
 package org.microbean.reference;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -30,21 +32,29 @@ import javax.lang.model.type.TypeMirror;
 
 import javax.lang.model.element.TypeElement;
 
+import org.microbean.bean.Id;
+
 import org.microbean.construct.Domain;
+
+import org.microbean.proxy.AbstractReflectiveProxier;
+import org.microbean.proxy.Proxy;
+import org.microbean.proxy.ProxySpecification;
+
+import static java.lang.invoke.MethodHandles.publicLookup;
 
 import static java.lang.reflect.Proxy.newProxyInstance;
 
 /**
- * An {@link AbstractClientProxier} implementation that uses {@link java.lang.reflect.Proxy java.lang.reflect.Proxy}
+ * An {@link AbstractReflectiveProxier} implementation that uses {@link java.lang.reflect.Proxy java.lang.reflect.Proxy}
  * machinery.
  *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  */
-public class ReflectiveClientProxier extends AbstractClientProxier<Class<?>> {
+public class ReflectiveClientProxier extends AbstractReflectiveProxier<ProxySpecification> implements ClientProxier {
 
-  private static final Lookup lookup = MethodHandles.publicLookup();
+  private static final Lookup lookup = publicLookup();
 
-  private final Function<? super List<? extends Class<?>>, ? extends ClassLoader> clf;
+  private static final Map<ProxySpecification, Object> proxyInstances = new ConcurrentHashMap<>();
 
   /**
    * Creates a new {@link ReflectiveClientProxier}.
@@ -52,73 +62,58 @@ public class ReflectiveClientProxier extends AbstractClientProxier<Class<?>> {
    * @param domain a {@link Domain}; must not be {@code null}
    *
    * @exception NullPointerException if {@code domain} is {@code null}
-   *
-   * @see #ReflectiveClientProxier(Domain, Function)
    */
   public ReflectiveClientProxier(final Domain domain) {
-    this(domain, i -> Thread.currentThread().getContextClassLoader());
+    super(domain);
+  }
+
+  @Override // ClientProxier
+  public <R> R clientProxy(final Id id, final Supplier<? extends R> instanceSupplier) {
+    return this.proxy(new ProxySpecification(this.domain(), id), instanceSupplier).$cast();
   }
 
   /**
-   * Creates a new {@link ReflectiveClientProxier}.
+   * Returns a {@link Proxy} appropriate for the supplied {@linkplain ProxySpecification specification} and {@link
+   * Supplier} of contextual instances.
    *
-   * @param domain a {@link Domain}; must not be {@code null}
+   * @param <R> the contextual instance type
    *
-   * @param clf a {@link Function} that returns a {@link ClassLoader} appropriate for a {@link List} of {@link Class}
-   * instances; must not be {@code null}
+   * @param ps an appropriate {@linkplain ProxySpecification proxy specification}; must not be {@code null}
+   *
+   * @param interfaces the interfaces to implement; every element is guaranteed to {@linkplain Class#isInterface() be an
+   * interface}
+   *
+   * @param instanceSupplier a {@link Supplier} of contextual instances; must not be {@code null}; may or may not create
+   * a new contextual instance each time it is invoked; may or may not be invoked multiple times depending on the
+   * subclass implementation
+   *
+   * @return a non-{@code null} {@link Proxy}
    *
    * @exception NullPointerException if any argument is {@code null}
    */
-  public ReflectiveClientProxier(final Domain domain,
-                                 final Function<? super List<? extends Class<?>>, ? extends ClassLoader> clf) {
-    super(domain);
-    this.clf = Objects.requireNonNull(clf, "clf");
-  }
-
-  @Override // AbstractClientProxier<Class<?>>
+  @Override // AbstractReflectiveProxier
   @SuppressWarnings("unchecked")
-  protected <R> ClientProxy<R> instantiate(final ProxySpecification ps, final Supplier<? extends R> instanceSupplier) {
-    final Domain domain = this.domain();
-    if (!domain.javaLangObject(ps.superclass())) {
-      throw new IllegalArgumentException("ps: " + ps);
-    }
-    final List<? extends TypeMirror> interfaceTypeMirrors = ps.interfaces();
-    final int size = interfaceTypeMirrors.size();
-    final Class<?>[] interfaces = new Class<?>[size];
-    try {
-      for (int i = 0; i < size; i++) {
-        final TypeElement e = (TypeElement)((DeclaredType)interfaceTypeMirrors.get(i)).asElement();
-        final String binaryName = domain.toString(domain.binaryName(e));
-        interfaces[i] = Class.forName(binaryName, false, this.classLoader(e));
-      }
-    } catch (final ClassNotFoundException cnfe) {
-      throw new IllegalArgumentException("ps: " + ps, cnfe);
-    }
-    return (ClientProxy<R>)newProxyInstance(this.clf.apply(List.of(interfaces)), interfaces, new InvocationHandler() {
-        @Override // InvocationHandler
-        public final Object invoke(final Object p, final Method m, final Object[] a) throws Throwable {
-          return switch (m) {
-          case null -> throw new NullPointerException("m");
-          case Method x when
-            x.getDeclaringClass() == Object.class &&
-            x.getReturnType() == boolean.class &&
-            x.getParameterCount() == 1 &&
-            x.getParameterTypes()[0] == Object.class &&
-            x.getName().equals("equals") -> p == a[0];
-          case Method x when
-            x.getDeclaringClass() == Object.class &&
-            x.getReturnType() == int.class &&
-            x.getParameterCount() == 0 &&
-            x.getName().equals("hashCode") -> System.identityHashCode(p);
-          default -> m.invoke(instanceSupplier.get(), a);
-          };
-        }
-      });
-  }
-
-  @Override // AbstractClientProxier<Void>
-  protected Lookup lookup(final Class<?> c) {
-    return lookup;
+  protected final <R> Proxy<R> proxy(final ProxySpecification ps,
+                                     final Class<?>[] interfaces,
+                                     final Supplier<? extends R> instanceSupplier) {
+    return
+      (Proxy<R>)proxyInstances
+      .computeIfAbsent(ps,
+                       ps0 -> newProxyInstance(this.classLoader(),
+                                               interfaces,
+                                               new InvocationHandler() {
+                                                 @Override // InvocationHandler
+                                                 public final Object invoke(final Object p,
+                                                                            final Method m,
+                                                                            final Object[] a)
+                                                   throws Throwable {
+                                                   return switch (m) {
+                                                   case Method x when equalsMethod(x) -> p == a[0];
+                                                   case Method x when hashCodeMethod(x) -> System.identityHashCode(p);
+                                                   default -> m.invoke(instanceSupplier.get(), a);
+                                                   };
+                                                 }
+                                               }));
   }
 
 }
