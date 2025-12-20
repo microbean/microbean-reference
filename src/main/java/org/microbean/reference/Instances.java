@@ -13,25 +13,26 @@
  */
 package org.microbean.reference;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.microbean.bean.Bean;
 import org.microbean.bean.Id;
 import org.microbean.bean.Creation;
+import org.microbean.bean.ReferencesSelector;
 
 /**
  * A factory for {@link Supplier}s of contextual instances.
  *
+ * <p>{@link Instances} instances are used by {@link Request} instances.</p>
+ *
  * @author <a href="https://about.me/lairdnelson" target="_top">Laird Nelson</a>
  *
  * @see #supplier(Bean, Creation)
+ *
+ * @see Request
  */
-public interface Instances extends AutoCloseable {
-
-  @Override // AutoCloseable
-  public default void close() {
-
-  }
+public interface Instances {
 
   /**
    * Returns {@code true} if and only if it is possible for a client proxy to be created for contextual instances
