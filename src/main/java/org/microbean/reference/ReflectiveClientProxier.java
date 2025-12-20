@@ -101,6 +101,7 @@ public class ReflectiveClientProxier extends AbstractReflectiveProxier<ProxySpec
       .computeIfAbsent(ps,
                        ps0 -> newProxyInstance(this.classLoader(),
                                                interfaces,
+                                               // Anonymous class, not lambda, due to Throwable in the signature
                                                new InvocationHandler() {
                                                  @Override // InvocationHandler
                                                  public final Object invoke(final Object p,

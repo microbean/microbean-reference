@@ -22,8 +22,8 @@ jobs:
         with:
           cache: 'maven'
           distribution: 'temurin'
-          java-version: '23'
-          mvn-toolchain-id: 'Temurin 23'
+          java-version: '24'
+          mvn-toolchain-id: 'Temurin 24'
           mvn-toolchain-vendor: 'openjdk' # see ../../pom.xml
       - id: 'mvn-verify'
         name: 'Step: Maven Verify'
