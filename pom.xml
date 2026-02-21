@@ -71,7 +71,7 @@
     <!-- maven-javadoc-plugin properties -->
     <bottom><![CDATA[Copyright &copy; ${project.inceptionYear}&ndash;{currentYear}, <a href="${project.organization.url}" target="_top">${project.organization.name}</a>. All rights reserved.]]></bottom>
     <doctitle>&lt;a href="${project.url}" target="_top"&gt;&lt;span style="font-family:Lobster, cursive;"&gt;µb&lt;/span&gt; ${project.artifactId}&lt;/a&gt; ${project.version}</doctitle>
-    <links>https://microbean.github.io/microbean-attributes/apidocs/,https://microbean.github.io/microbean-bean/apidocs/,https://microbean.github.io/microbean-construct/apidocs/,https://microbean.github.io/microbean-proxy/apidocs/</links>
+    <links>https://microbean.github.io/microbean-bean/apidocs/,https://microbean.github.io/microbean-construct/apidocs/,https://microbean.github.io/microbean-proxy/apidocs/</links>
     <sourcetab>2</sourcetab>
 
     <!-- maven-release-plugin properties -->
@@ -130,19 +130,19 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-bean</artifactId>
-        <version>0.0.22</version>
+        <version>0.0.23</version>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-construct</artifactId>
-        <version>0.0.18</version>
+        <version>0.0.24</version>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-proxy</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.6</version>
       </dependency>
 
     </dependencies>
@@ -309,7 +309,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>12.3.0</version>
+              <version>13.2.0</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -330,7 +330,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.1</version>
+          <version>3.15.0</version>
           <configuration>
             <compilerArgs>
               <arg>-Xlint:all</arg>
@@ -340,7 +340,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.9.0</version>
+          <version>3.10.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
@@ -442,7 +442,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>versions-maven-plugin</artifactId>
-          <version>2.20.1</version>
+          <version>2.21.0</version>
         </plugin>
         <plugin>
           <groupId>io.smallrye</groupId>
@@ -452,7 +452,7 @@
         <plugin>
           <groupId>org.sonatype.central</groupId>
           <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>0.9.0</version>
+          <version>0.10.0</version>
           <extensions>true</extensions>
           <configuration>
             <publishingServerId>central.sonatype.com</publishingServerId>

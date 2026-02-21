@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2025 microBean™.
+ * Copyright © 2025–2026 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,7 +17,11 @@ import java.util.Iterator;
 
 import java.util.function.Supplier;
 
-import org.microbean.assign.AttributedType;
+import javax.lang.model.AnnotatedConstruct;
+
+import javax.lang.model.type.TypeMirror;
+
+import org.microbean.assign.Annotated;
 import org.microbean.assign.Selectable;
 
 import org.microbean.bean.Bean;
@@ -37,8 +41,8 @@ import static java.util.Collections.emptyIterator;
 import static java.util.Objects.requireNonNull;
 
 /**
- * A central object representing a request for dependencies that is a {@link Creation} (and therefore also a {@link
- * Destruction}), a {@link DestructorRegistry}, and a {@link References}.
+ * A central object representing a request for dependencies that is a {@link Creation} (and therefore also, per
+ * contract, a {@link Destruction}), a {@link DestructorRegistry}, and a {@link References}.
  *
  * <p>Instances of this class are the heart and soul of a dependency injection and acquisition system.</p>
  *
@@ -70,7 +74,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
 
   private final Domain domain;
 
-  private final Selectable<? super AttributedType, Bean<?>> beans;
+  private final Selectable<? super Annotated<? extends AnnotatedConstruct>, Bean<?>> beans;
 
   private final Instances instances;
 
@@ -80,7 +84,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
 
   private final Bean<I> b; // nullable; B and R must then be (effectively) Void
 
-  private final AttributedType rType; // nullable; R must then be Void
+  private final Annotated<? extends AnnotatedConstruct> rConstruct; // nullable; R must then be Void
 
 
   /*
@@ -93,7 +97,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
    *
    * @param d a {@link Domain}; must not be {@code null}
    *
-   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AttributedType}; must not be {@code
+   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AnnotatedConstruct}; must not be {@code
    * null}; must be safe for concurrent use by multiple threads; often assembled out of methods present in the {@link
    * org.microbean.bean.Selectables} and {@link org.microbean.bean.Beans} classes, among other such utility classes
    *
@@ -107,7 +111,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
    * @see #Request(Domain, Selectable, Instances, DestructorTree, ClientProxier)
    */
   public Request(final Domain d,
-                 final Selectable<? super AttributedType, Bean<?>> s,
+                 final Selectable<? super Annotated<? extends AnnotatedConstruct>, Bean<?>> s,
                  final Instances instances,
                  final ClientProxier cp) {
     this(d, s, instances, null, cp, null, null);
@@ -118,7 +122,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
    *
    * @param d a {@link Domain}; must not be {@code null}
    *
-   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AttributedType}; must not be {@code
+   * @param s a {@link Selectable} providing access to {@link Bean}s by {@link AnnotatedConstruct}; must not be {@code
    * null}; must be safe for concurrent use by multiple threads; often assembled out of methods present in the {@link
    * org.microbean.bean.Selectables} and {@link org.microbean.bean.Beans} classes, among other such utility classes
    *
@@ -133,7 +137,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
    * @exception NullPointerException if {@code s}, {@code instances}, or {@code cp} is {@code null}
    */
   public Request(final Domain d,
-                 final Selectable<? super AttributedType, Bean<?>> s,
+                 final Selectable<? super Annotated<? extends AnnotatedConstruct>, Bean<?>> s,
                  final Instances instances,
                  final DestructorTree destructorTree, // nullable
                  final ClientProxier cp) {
@@ -141,19 +145,19 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
   }
 
   private Request(final Domain d,
-                  final Selectable<? super AttributedType, Bean<?>> s,
+                  final Selectable<? super Annotated<? extends AnnotatedConstruct>, Bean<?>> s,
                   final Instances instances,
                   final DestructorTree destructorTree, // nullable
                   final ClientProxier cp,
                   final Bean<I> b, // nullable
-                  final AttributedType rType) { // the type of the references returned (<R>); nullable
+                  final Annotated<? extends AnnotatedConstruct> rConstruct) { // the type of the references returned (<R>); nullable
     this.domain = requireNonNull(d, "d");
     this.beans = requireNonNull(s, "s");
     this.instances = requireNonNull(instances, "instances");
     this.cp = requireNonNull(cp, "cp");
     this.destructorTree = destructorTree == null ? new DefaultDestructorTree() : destructorTree;
     this.b = b;
-    this.rType = rType;
+    this.rConstruct = rConstruct;
   }
 
 
@@ -201,16 +205,16 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
 
   @Override // ReferencesSelector
   @SuppressWarnings("unchecked")
-  public final <X> References<X> references(final AttributedType rType) {
-    return this.rType == rType ? (References<X>)this :
-      // This basically returns "this" but with a new rType. But Request is immutable so we make a copy.
+  public final <X> References<X> references(final Annotated<? extends AnnotatedConstruct> rConstruct) {    
+    return this.rConstruct == rConstruct ? (References<X>)this :
+      // This basically returns "this" but with a new rConstruct. But Request is immutable so we make a copy.
       new Request<>(this.domain,
-                    this.beans,
-                    this.instances,
-                    this.destructorTree, // deliberately NO this.destructorTree.newChild() call
-                    this.cp,
-                    this.b, // nullable; <I> will then be (effectively) Void
-                    rType); // nullable; <X> will then be Void
+                     this.beans,
+                     this.instances,
+                     this.destructorTree, // deliberately NO this.destructorTree.newChild() call
+                     this.cp,
+                     this.b, // nullable; <I> will then be (effectively) Void
+                     rConstruct); // nullable; <X> will then be Void
   }
 
   @Override // DestructorTree (DestructorRegistry)
@@ -220,7 +224,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
 
   @Override // References<R>
   public final int size() {
-    return this.rType == null ? 0 : this.beans.select(this.rType).size();
+    return this.rConstruct == null ? 0 : this.beans.select(this.rConstruct).size();
   }
 
   /*
@@ -228,7 +232,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
    */
 
   private final Iterator<Bean<?>> beanIterator() {
-    return this.rType == null ? emptyIterator() : this.beans.select(this.rType).iterator();
+    return this.rConstruct == null ? emptyIterator() : this.beans.select(this.rConstruct).iterator();
   }
 
   @SuppressWarnings("unchecked")
@@ -242,12 +246,12 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
     }
     return
       new Request<X, Void>(this.domain,
-                           this.beans,
-                           this.instances,
-                           this.destructorTree.newChild(), // critical; !b.equals(this.b)
-                           this.cp,
-                           b, // nullable; if so, <X> better resolve to Void
-                           null); // rType; <R> resolves to Void
+                            this.beans,
+                            this.instances,
+                            this.destructorTree.newChild(), // critical; !b.equals(this.b)
+                            this.cp,
+                            b, // nullable; if so, <X> better resolve to Void
+                            null); // rConstruct; <R> resolves to Void
   }
 
 
@@ -265,7 +269,7 @@ public final class Request<I, R> implements Creation<I>, Destruction, Destructor
 
     private ReferencesIterator() {
       super();
-      if (rType == null) {
+      if (Request.this.rConstruct == null) {
         this.i = emptyIterator();
       }
     }
