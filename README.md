@@ -1,6 +1,9 @@
 # microBean™ Reference
 
-[![Maven Central](https://img.shields.io/maven-central/v/org.microbean/microbean-reference.svg?label=Maven%20Central)](https://search.maven.org/artifact/org.microbean/microbean-reference)
+[![Maven
+Central](https://img.shields.io/maven-central/v/org.microbean/microbean-reference.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/org.microbean/microbean-reference)
+
+![0% AI](https://img.shields.io/badge/%F0%9F%A4%96_AI-0%25_%F0%9F%8C%BC-brightgreen)
 
 The microBean™ Reference project provides classes and interfaces assisting with implementing contextual references.
 
@@ -19,15 +22,16 @@ microBean™ Reference requires a Java runtime of version 21 or higher.
 
 # Installation
 
-microBean™ Reference is available on [Maven Central](https://search.maven.org/).  Include microBean™ Reference as a
+microBean™ Reference is available on [Maven
+Central](https://central.sonatype.com/artifact/org.microbean/microbean-reference). Include microBean™ Reference as a
 Maven dependency:
 
 ```xml
 <dependency>
   <groupId>org.microbean</groupId>
   <artifactId>microbean-reference</artifactId>
-  <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-reference for up-to-date available versions. -->
-  <version>0.0.5</version>
+  <!-- Always check https://central.sonatype.com/artifact/org.microbean/microbean-reference for up-to-date available versions. -->
+  <version>0.0.6</version>
 </dependency>
 ```
 
