@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-reference</artifactId>
-  <version>0.0.6</version>
+  <version>0.0.7-SNAPSHOT</version>
 
   <name>microBean™ Reference</name>
   <description>microBean™ Reference: Utility classes for working with references.</description>
@@ -43,7 +43,7 @@
     <connection>${scm.url}</connection>
     <developerConnection>${scm.url}</developerConnection>
     <url>https://github.com/microbean/microbean-reference/</url>
-    <tag>v0.0.6</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
